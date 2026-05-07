@@ -1,0 +1,19 @@
+# Normalize line endings to LF inside the repo. Windows users still see CRLF on disk.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.zip binary
+*.xbrl text eol=lf
+*.xml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.sql text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
