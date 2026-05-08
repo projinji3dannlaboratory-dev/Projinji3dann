@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { SITE_CONFIG } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "スコアの考え方・免責事項",
   description:
-    "本サイトの独自スコアの計算方法、年収シミュレーションの前提、データソース、免責事項について。",
+    "本サイトの独自スコアの計算方法、年収シミュレーションの前提、データソース、免責事項、運営者プロフィールについて。",
 };
 
 export default function AboutPage() {
@@ -62,17 +66,68 @@ export default function AboutPage() {
         </ul>
       </Card>
 
+      <Card id="operator" className="mt-4 p-6">
+        <h2 className="text-xl font-semibold">運営者について</h2>
+        <div className="mt-3 space-y-2 text-sm leading-relaxed">
+          <p>
+            本サイト「{SITE_CONFIG.siteName}」は、現役人事・採用コンサルタントの
+            <strong className="font-semibold">「{SITE_CONFIG.operator}」</strong>
+            が、姉妹サイト「
+            <a
+              className="underline"
+              href={SITE_CONFIG.parentSite.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {SITE_CONFIG.parentSite.name}
+            </a>
+            」の派生プロダクトとして開発・運営しています。
+          </p>
+          <p className="text-muted-foreground">{SITE_CONFIG.operatorBio}</p>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <Button asChild variant="outline" className="justify-between">
+            <a
+              href={SITE_CONFIG.parentSite.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              公式サイトを見る <ExternalLink className="size-4" />
+            </a>
+          </Button>
+          <Button asChild variant="outline" className="justify-between">
+            <a
+              href={SITE_CONFIG.coconalaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ココナラで個別相談 <ExternalLink className="size-4" />
+            </a>
+          </Button>
+        </div>
+      </Card>
+
       <Card id="contact" className="mt-4 p-6">
         <h2 className="text-xl font-semibold">関連ページ</h2>
         <ul className="mt-3 space-y-2 text-sm">
           <li>
-            <a className="underline" href="/contact">お問い合わせ</a> — データ訂正依頼・取材依頼など
+            <Link className="underline" href="/contact">
+              お問い合わせ
+            </Link>
+            {" "}— データ訂正依頼・取材依頼など
           </li>
           <li>
-            <a className="underline" href="/privacy">プライバシーポリシー</a> — Cookie・広告配信の取扱い
+            <Link className="underline" href="/privacy">
+              プライバシーポリシー
+            </Link>
+            {" "}— Cookie・広告配信の取扱い
           </li>
           <li>
-            <a className="underline" href="/terms">利用規約</a> — サービスのご利用条件
+            <Link className="underline" href="/terms">
+              利用規約
+            </Link>
+            {" "}— サービスのご利用条件
           </li>
         </ul>
       </Card>

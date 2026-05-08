@@ -1,7 +1,6 @@
 /**
- * Site-wide configuration sourced from environment variables so the user can
- * tweak operator name, contact email, and ad/analytics tracking IDs from the
- * Vercel dashboard without code changes.
+ * Site-wide configuration. Defaults match the operator's verified public
+ * identity ("プロ人事３段 さとう"); env vars can override per environment.
  */
 
 export const SITE_CONFIG = {
@@ -9,20 +8,40 @@ export const SITE_CONFIG = {
   siteUrl:
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://salary-ranking-jp.vercel.app",
 
-  /** サイト名 */
+  /** サイト名（プロダクト名） */
   siteName: "年収ランキング.jp",
 
-  /** 運営者表示名 (例: "山田太郎" or "プロジンジ Lab") */
-  operator: process.env.NEXT_PUBLIC_SITE_OPERATOR ?? "サイト運営者",
+  /** 運営者表示名 (フッター・ポリシーで使用) */
+  operator: process.env.NEXT_PUBLIC_SITE_OPERATOR ?? "プロ人事３段 さとう",
 
-  /** 連絡先メールアドレス。お問い合わせフォームの mailto: に使用 */
-  contactEmail:
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "contact@example.com",
+  /** 運営者の肩書き */
+  operatorTitle:
+    process.env.NEXT_PUBLIC_SITE_OPERATOR_TITLE
+    ?? "現役人事・採用コンサルタント",
 
-  /** Google AdSense Publisher ID (例: "ca-pub-1234567890123456") — 設定時のみAdSenseスクリプトをロード */
+  /** 運営者の略歴 */
+  operatorBio:
+    "東証プライム上場の大手商社・大手メーカーで人事経験15年以上。新卒・キャリア採用中心に延べ1万人以上の面接・面談、1,000社超の企業研究実績。",
+
+  /** 親ブランド (AdSense承認実績ありのメインサイト) */
+  parentSite: {
+    name: "就職・転職 LAB. by プロ人事３段",
+    shortName: "プロ人事３段の就職・転職研究室",
+    url: "https://projinji3dann-laboratory.com/",
+    contactUrl: "https://projinji3dann-laboratory.com/contact/",
+    privacyUrl: "https://projinji3dann-laboratory.com/privacy/",
+  },
+
+  /** 個別相談・サービス販売 */
+  coconalaUrl: "https://coconala.com/users/724079",
+
+  /** 連絡先メールアドレス (任意・通常は親サイトのフォーム経由) */
+  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "",
+
+  /** Google AdSense Publisher ID (例: "ca-pub-1234567890123456") */
   adsenseClient: process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "",
 
-  /** Google Analytics Measurement ID (例: "G-XXXXXXXXXX") — 設定時のみGA読み込み */
+  /** Google Analytics Measurement ID (例: "G-XXXXXXXXXX") */
   gaId: process.env.NEXT_PUBLIC_GA_ID ?? "",
 
   /** プライバシーポリシー / 利用規約の最終更新日 */

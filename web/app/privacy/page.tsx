@@ -221,12 +221,35 @@ const SECTIONS: { id: string; title: string; body: React.ReactNode }[] = [
       <>
         <p>本ポリシーに関するお問い合わせは以下までお願いします。</p>
         <ul>
-          <li>運営者: {SITE_CONFIG.operator}</li>
           <li>
-            連絡先:{" "}
-            <a className="underline" href={`mailto:${SITE_CONFIG.contactEmail}`}>
-              {SITE_CONFIG.contactEmail}
+            運営者: {SITE_CONFIG.operator}（{SITE_CONFIG.operatorTitle}）
+          </li>
+          <li>
+            姉妹サイト:{" "}
+            <a
+              className="underline"
+              href={SITE_CONFIG.parentSite.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {SITE_CONFIG.parentSite.name}
             </a>
+          </li>
+          <li>
+            お問い合わせフォーム:{" "}
+            <a
+              className="underline"
+              href={SITE_CONFIG.parentSite.contactUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              公式サイト経由
+            </a>{" "}
+            （または{" "}
+            <a className="underline" href="/contact">
+              当サイトのお問い合わせページ
+            </a>
+            ）
           </li>
         </ul>
       </>

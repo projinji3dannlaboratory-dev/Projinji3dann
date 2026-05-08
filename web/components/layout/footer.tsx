@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { snapshotMeta } from "@/lib/queries";
 import { SITE_CONFIG } from "@/lib/site-config";
 
@@ -7,7 +8,8 @@ export function Footer() {
   return (
     <footer className="mt-20 border-t bg-muted/30">
       <div className="mx-auto max-w-7xl px-4 py-10 text-sm text-muted-foreground md:px-6">
-        <div className="grid gap-6 md:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-4">
+          {/* About / Operator */}
           <div className="md:col-span-2">
             <h3 className="mb-2 font-semibold text-foreground">
               {SITE_CONFIG.siteName}
@@ -15,10 +17,35 @@ export function Footer() {
             <p>
               日本の上場企業の有価証券報告書から、平均年収・平均年齢・独自スコアをランキング表示します。
             </p>
-            <p className="mt-2 text-xs">
-              運営: {SITE_CONFIG.operator}
-            </p>
+            <div className="mt-4 rounded-lg border bg-background/40 p-3 text-xs">
+              <div className="font-medium text-foreground">
+                運営: {SITE_CONFIG.operator}
+              </div>
+              <div className="text-[11px]">{SITE_CONFIG.operatorTitle}</div>
+              <p className="mt-1 leading-relaxed">{SITE_CONFIG.operatorBio}</p>
+              <div className="mt-2 flex flex-wrap gap-3 text-[11px]">
+                <a
+                  className="inline-flex items-center gap-1 underline hover:text-foreground"
+                  href={SITE_CONFIG.parentSite.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  公式サイト
+                  <ExternalLink className="size-3" />
+                </a>
+                <a
+                  className="inline-flex items-center gap-1 underline hover:text-foreground"
+                  href={SITE_CONFIG.coconalaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  ココナラ
+                  <ExternalLink className="size-3" />
+                </a>
+              </div>
+            </div>
           </div>
+
           <div>
             <h3 className="mb-2 font-semibold text-foreground">データ</h3>
             <ul className="space-y-1">

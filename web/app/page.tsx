@@ -2,6 +2,7 @@ import { fetchAllCompanies } from "@/lib/queries";
 import { FiltersPanel } from "@/components/companies/filters-panel";
 import { RankingList } from "@/components/companies/ranking-list";
 import { INDUSTRIES } from "@/lib/industries";
+import { SITE_CONFIG } from "@/lib/site-config";
 
 export const revalidate = 86400; // ISR: re-render at most once per day
 
@@ -25,6 +26,13 @@ function Hero({ count }: { count: number }) {
       <div className="absolute -right-12 -top-12 size-64 rounded-full bg-amber-400/10 blur-3xl" />
       <div className="absolute -bottom-16 -left-12 size-72 rounded-full bg-sky-400/10 blur-3xl" />
       <div className="relative">
+        <div className="mb-2 inline-flex items-center gap-2 rounded-full border bg-background/40 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">
+          <span className="size-1.5 rounded-full bg-amber-500" />
+          <span>
+            by <span className="font-semibold text-foreground">{SITE_CONFIG.operator}</span>
+            <span className="hidden sm:inline">{" / "}現役人事・採用コンサルタント (人事経験15年以上)</span>
+          </span>
+        </div>
         <h1 className="text-2xl font-bold leading-tight md:text-4xl">
           若くして高年収を実現している<br className="md:hidden" />
           上場企業ランキング
