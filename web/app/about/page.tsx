@@ -63,10 +63,18 @@ export default function AboutPage() {
       </Card>
 
       <Card id="contact" className="mt-4 p-6">
-        <h2 className="text-xl font-semibold">お問い合わせ</h2>
-        <p className="mt-3 text-sm">
-          データの誤り・掲載中止のご依頼・取材依頼はメールにてお願いします（後日フォーム化予定）。
-        </p>
+        <h2 className="text-xl font-semibold">関連ページ</h2>
+        <ul className="mt-3 space-y-2 text-sm">
+          <li>
+            <a className="underline" href="/contact">お問い合わせ</a> — データ訂正依頼・取材依頼など
+          </li>
+          <li>
+            <a className="underline" href="/privacy">プライバシーポリシー</a> — Cookie・広告配信の取扱い
+          </li>
+          <li>
+            <a className="underline" href="/terms">利用規約</a> — サービスのご利用条件
+          </li>
+        </ul>
       </Card>
     </div>
   );

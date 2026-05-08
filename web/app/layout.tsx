@@ -2,11 +2,14 @@ import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { CookieBanner } from "@/components/layout/cookie-banner";
+import { AnalyticsScripts } from "@/components/layout/analytics-scripts";
 import {
   JsonLd,
   organizationJsonLd,
   siteJsonLd,
 } from "@/components/seo/json-ld";
+import { SITE_CONFIG, isAdsenseEnabled } from "@/lib/site-config";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -36,6 +39,10 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
+  // Google AdSense ownership verification (only emitted if env var is set)
+  other: isAdsenseEnabled()
+    ? { "google-adsense-account": SITE_CONFIG.adsenseClient }
+    : undefined,
 };
 
 export const viewport: Viewport = {
@@ -55,7 +62,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <CookieBanner />
         </ThemeProvider>
+        <AnalyticsScripts />
         <JsonLd data={[siteJsonLd(), organizationJsonLd()]} />
       </body>
     </html>
