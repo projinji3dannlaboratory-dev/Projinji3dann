@@ -20,6 +20,8 @@ export interface ConsentState {
   rejectAll: () => void;
   setAnalytics: (v: boolean) => void;
   setAds: (v: boolean) => void;
+  /** Re-show the cookie banner (used by the "Cookie設定" footer link) */
+  reopenBanner: () => void;
   setHydrated: () => void;
 }
 
@@ -35,6 +37,8 @@ export const useConsent = create<ConsentState>()(
       rejectAll: () => set({ status: "necessary", analytics: false, ads: false }),
       setAnalytics: (v) => set({ analytics: v, status: "custom" }),
       setAds: (v) => set({ ads: v, status: "custom" }),
+      reopenBanner: () =>
+        set({ status: "unknown", analytics: false, ads: false }),
       setHydrated: () => set({ hydrated: true }),
     }),
     {

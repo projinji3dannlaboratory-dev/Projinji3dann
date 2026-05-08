@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { snapshotMeta } from "@/lib/queries";
 import { SITE_CONFIG } from "@/lib/site-config";
+import { CookieSettingsLink } from "./cookie-settings-link";
 
 export function Footer() {
   const meta = snapshotMeta();
@@ -103,6 +104,9 @@ export function Footer() {
                 <Link className="underline" href="/contact">
                   お問い合わせ
                 </Link>
+              </li>
+              <li>
+                <CookieSettingsLink />
               </li>
             </ul>
           </div>
