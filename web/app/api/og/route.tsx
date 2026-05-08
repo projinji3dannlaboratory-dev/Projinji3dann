@@ -229,13 +229,14 @@ async function defaultOg() {
           style={{
             display: "flex",
             flexDirection: "column",
-            fontSize: 76,
+            fontSize: 84,
             fontWeight: 800,
             marginTop: 30,
-            lineHeight: 1.1,
+            lineHeight: 1.15,
+            letterSpacing: -1,
           }}
         >
-          <div style={{ display: "flex" }}>若くして高年収を実現している</div>
+          <div style={{ display: "flex" }}>若くして高年収な</div>
           <div style={{ display: "flex" }}>上場企業ランキング</div>
         </div>
         <div style={{ display: "flex", fontSize: 30, color: "#a1a1aa", marginTop: 40 }}>
