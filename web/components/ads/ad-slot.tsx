@@ -19,6 +19,9 @@ interface AdSlotProps {
   label?: boolean;
   /** Min height to reserve to avoid CLS (Cumulative Layout Shift) */
   minHeight?: number;
+  /** Max width of the ad container in px. AdSense's responsive ad picks an ad
+   *  size based on this width — smaller maxWidth = smaller ads. */
+  maxWidth?: number;
 }
 
 /**
@@ -35,7 +38,8 @@ export function AdSlot({
   layoutKey,
   className = "",
   label = true,
-  minHeight = 90,
+  minHeight = 60,
+  maxWidth = 500,
 }: AdSlotProps) {
   const adsConsent = useConsent((s) => s.ads);
   const hydrated = useConsent((s) => s.hydrated);
@@ -67,8 +71,8 @@ export function AdSlot({
 
   return (
     <div
-      className={`my-6 mx-auto w-full ${className}`}
-      style={{ minHeight }}
+      className={`my-6 mx-auto ${className}`}
+      style={{ minHeight, maxWidth }}
       aria-label="広告"
     >
       {label && (
@@ -94,15 +98,18 @@ export function AdSlot({
 export function InlineAd({
   className,
   minHeight,
+  maxWidth,
 }: {
   className?: string;
   minHeight?: number;
+  maxWidth?: number;
 }) {
   return (
     <AdSlot
       slot={SITE_CONFIG.adsenseSlotInline}
       className={className}
       minHeight={minHeight}
+      maxWidth={maxWidth}
     />
   );
 }
