@@ -14,15 +14,12 @@ export default async function HomePage() {
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">
       <Hero count={rows.length} />
 
-      {/* Ad slot 1: just below the hero, above the fold for most viewports */}
-      <InlineAd className="my-6" />
-
       <div className="my-6">
         <FiltersPanel industries={INDUSTRIES} />
       </div>
       <RankingList rows={rows} />
 
-      {/* Ad slot 2: end of page, after the user has engaged with the ranking */}
+      {/* Ad slot: end of page, after the user has engaged with the ranking */}
       <InlineAd className="mt-10" />
     </div>
   );
