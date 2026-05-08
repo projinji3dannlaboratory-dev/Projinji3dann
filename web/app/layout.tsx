@@ -2,6 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import {
+  JsonLd,
+  organizationJsonLd,
+  siteJsonLd,
+} from "@/components/seo/json-ld";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -51,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1">{children}</main>
           <Footer />
         </ThemeProvider>
+        <JsonLd data={[siteJsonLd(), organizationJsonLd()]} />
       </body>
     </html>
   );

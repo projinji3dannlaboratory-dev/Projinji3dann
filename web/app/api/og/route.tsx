@@ -5,6 +5,47 @@ import { formatYen } from "@/lib/utils";
 
 export const runtime = "edge";
 
+// Cache the Japanese font fetch across requests within an instance.
+// We pull a Noto Sans JP weight 700 subset from Google Fonts CDN.
+let _fontPromise: Promise<ArrayBuffer> | null = null;
+
+async function loadJpFont(): Promise<ArrayBuffer> {
+  if (_fontPromise) return _fontPromise;
+  _fontPromise = (async () => {
+    // Use a CSS endpoint that returns ttf bytes directly. This is a known pattern
+    // for @vercel/og — we fetch the .ttf URL extracted from a CSS query.
+    const cssUrl =
+      "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&display=swap";
+    const cssResp = await fetch(cssUrl, {
+      headers: {
+        // Pretend to be a modern browser that supports woff2; some endpoints
+        // return ttf when sent a non-woff2 UA. We then look for any url(...) hit.
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      },
+    });
+    const css = await cssResp.text();
+    const match = css.match(/src:\s*url\(([^)]+)\)\s*format/);
+    if (!match) throw new Error("Could not locate font URL in Google Fonts CSS");
+    const fontUrl = match[1];
+    const fontResp = await fetch(fontUrl);
+    return await fontResp.arrayBuffer();
+  })();
+  return _fontPromise;
+}
+
+async function ogFonts() {
+  try {
+    const data = await loadJpFont();
+    return [
+      { name: "NotoSansJP", data, weight: 700 as const, style: "normal" as const },
+    ];
+  } catch (e) {
+    console.warn("[og] failed to load Noto Sans JP, falling back to default", e);
+    return undefined;
+  }
+}
+
 const GRADE_GRADIENT: Record<string, string> = {
   S: "linear-gradient(135deg, #fb923c, #ef4444)",
   A: "linear-gradient(135deg, #34d399, #10b981)",
@@ -38,9 +79,10 @@ export async function GET(req: NextRequest) {
   const grade = c.grade ?? "—";
   const bg = GRADE_GRADIENT[grade] ?? "linear-gradient(135deg, #475569, #1e293b)";
 
+  const fonts = await ogFonts();
   return new ImageResponse(
     (
-      <div style={PAGE}>
+      <div style={{ ...PAGE, fontFamily: fonts ? "NotoSansJP" : PAGE.fontFamily }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 24, color: "#a1a1aa" }}>
           <div style={{ display: "flex" }}>年収ランキング.jp</div>
           <div style={{ display: "flex", width: 4, height: 4, borderRadius: 2, background: "#52525b" }} />
@@ -126,11 +168,12 @@ export async function GET(req: NextRequest) {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 },
+    { width: 1200, height: 630, fonts },
   );
 }
 
-function defaultOg() {
+async function defaultOg() {
+  const fonts = await ogFonts();
   return new ImageResponse(
     (
       <div
@@ -142,7 +185,7 @@ function defaultOg() {
           background: "linear-gradient(135deg, #0c0a09, #1c1917)",
           color: "white",
           padding: "80px",
-          fontFamily: "sans-serif",
+          fontFamily: fonts ? "NotoSansJP" : "sans-serif",
         }}
       >
         <div style={{ display: "flex", fontSize: 36, color: "#fbbf24" }}>✨ 年収ランキング.jp</div>
@@ -164,7 +207,7 @@ function defaultOg() {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 },
+    { width: 1200, height: 630, fonts },
   );
 }
 

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { CompanyRow } from "@/lib/types";
 import { type FilterState, useFilters } from "@/lib/filter-store";
 import { GradeBadge } from "./grade-badge";
+import { FavoriteButton } from "./favorite-button";
 import { formatYen, formatNumber } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -145,8 +146,14 @@ function VirtualizedTable({ rows }: { rows: CompanyRow[] }) {
                 <div className="text-right tabular-nums text-muted-foreground">
                   {r.employee_count != null ? r.employee_count.toLocaleString() : "—"}
                 </div>
-                <div className="flex justify-end text-muted-foreground">
-                  <ArrowUpRight className="size-4" />
+                <div
+                  className="flex justify-end"
+                  // Don't propagate click to the link wrapper for the favorite button
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <FavoriteButton
+                    code={r.sec_code ?? r.ticker4 ?? r.edinet_code}
+                  />
                 </div>
               </Link>
             );

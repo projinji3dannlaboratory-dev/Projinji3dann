@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ScoreBreakdown } from "@/components/companies/score-breakdown";
 import { SalarySimulator } from "@/components/companies/salary-simulator";
 import { SimilarCompanies } from "@/components/companies/similar-companies";
+import { FavoriteButton } from "@/components/companies/favorite-button";
+import { JsonLd, breadcrumbJsonLd, companyJsonLd } from "@/components/seo/json-ld";
 import { formatNumber, formatYen } from "@/lib/utils";
 import { ExternalLink, ArrowLeft, GitCompareArrows } from "lucide-react";
 
@@ -42,23 +44,47 @@ export default async function CompanyPage({ params }: PageProps) {
   if (!company) notFound();
 
   const all = await fetchAllCompanies();
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10">
+      <JsonLd
+        data={[
+          companyJsonLd(company),
+          breadcrumbJsonLd([
+            { name: "ホーム", url: `${base}/` },
+            ...(company.industry_name && company.industry_code
+              ? [
+                  {
+                    name: company.industry_name,
+                    url: `${base}/industries/${company.industry_code}`,
+                  },
+                ]
+              : []),
+            { name: company.name_ja, url: `${base}/companies/${code}` },
+          ]),
+        ]}
+      />
       <div className="mb-4 flex items-center justify-between">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/" className="inline-flex items-center gap-1">
             <ArrowLeft className="size-4" /> ランキングへ戻る
           </Link>
         </Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link
-            href={`/compare?codes=${company.sec_code ?? company.ticker4 ?? company.edinet_code}`}
-            className="inline-flex items-center gap-1"
-          >
-            <GitCompareArrows className="size-4" /> この企業を比較に追加
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <FavoriteButton
+            code={company.sec_code ?? company.ticker4 ?? company.edinet_code}
+            showLabel
+          />
+          <Button variant="outline" size="sm" asChild>
+            <Link
+              href={`/compare?codes=${company.sec_code ?? company.ticker4 ?? company.edinet_code}`}
+              className="inline-flex items-center gap-1"
+            >
+              <GitCompareArrows className="size-4" /> 比較に追加
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* hero */}

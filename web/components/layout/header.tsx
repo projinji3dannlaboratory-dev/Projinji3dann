@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Star } from "lucide-react";
 
 export function Header() {
   return (
@@ -13,11 +13,22 @@ export function Header() {
           </Link>
           <nav className="hidden gap-4 text-sm text-muted-foreground md:flex">
             <Link href="/" className="hover:text-foreground">ランキング</Link>
+            <Link href="/industries" className="hover:text-foreground">業種別</Link>
             <Link href="/compare" className="hover:text-foreground">企業比較</Link>
+            <Link href="/favorites" className="inline-flex items-center gap-1 hover:text-foreground">
+              <Star className="size-3.5" /> お気に入り
+            </Link>
             <Link href="/about" className="hover:text-foreground">スコアの考え方</Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/favorites"
+            aria-label="お気に入り"
+            className="md:hidden inline-flex items-center justify-center size-9 rounded-md hover:bg-accent text-muted-foreground"
+          >
+            <Star className="size-4" />
+          </Link>
           <ThemeToggle />
         </div>
       </div>
