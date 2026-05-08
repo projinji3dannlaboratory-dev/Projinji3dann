@@ -12,7 +12,11 @@ from .config import PROCESSED_DIR, REPO_ROOT
 from .industry_map import INDUSTRY_NAME_BY_CODE
 
 
+# Snapshot is written to TWO locations:
+#   - web/data/snapshot.json        (imported by Node-runtime pages, fast)
+#   - web/public/data/snapshot.json (served via CDN, fetched by Edge functions)
 WEB_DATA = REPO_ROOT / "web" / "data" / "snapshot.json"
+WEB_PUBLIC_DATA = REPO_ROOT / "web" / "public" / "data" / "snapshot.json"
 
 
 def latest_snapshot_path() -> Path | None:
@@ -100,12 +104,11 @@ def export(snapshot_path: Path | None = None) -> Path:
         "industry_aggregates": aggs,
         "rows": out,
     }
-    WEB_DATA.parent.mkdir(parents=True, exist_ok=True)
-    WEB_DATA.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=False),
-        encoding="utf-8",
-    )
-    print(f"[ok] wrote {WEB_DATA} ({len(out)} companies, {WEB_DATA.stat().st_size:,} bytes)")
+    body = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=False)
+    for target in (WEB_DATA, WEB_PUBLIC_DATA):
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(body, encoding="utf-8")
+        print(f"[ok] wrote {target} ({len(out)} companies, {target.stat().st_size:,} bytes)")
     return WEB_DATA
 
 

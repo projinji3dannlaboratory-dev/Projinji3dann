@@ -1,11 +1,17 @@
 /**
- * Database queries layer.
+ * Database queries layer (Node runtime).
+ *
+ * IMPORTANT: This module imports the snapshot directly. It is fine for the
+ * server / Node runtime (where it's bundled into a serverless function with
+ * 250MB compressed limit) but MUST NOT be imported from any Edge runtime
+ * route — Edge functions have a 1-4MB limit on Hobby and the 3.2MB JSON
+ * would blow it. Edge routes (e.g. /api/og) should fetch
+ * `/data/snapshot.json` from the CDN-served public asset instead.
  *
  * Resolution order:
  *   1. Supabase (production) when NEXT_PUBLIC_SUPABASE_URL + ANON_KEY are set
- *   2. Real snapshot at web/data/snapshot.json (committed, refreshed by the
- *      Python pipeline) — this is what the deployed site uses out of the box
- *   3. Hand-crafted SAMPLE_DATA — only when no snapshot file is present
+ *   2. Real snapshot at web/data/snapshot.json (imported below)
+ *   3. Hand-crafted SAMPLE_DATA — when snapshot is empty
  */
 import type { CompanyRow } from "./types";
 import { supabasePublic } from "./supabase";
@@ -60,11 +66,14 @@ export async function fetchCompany(secCode: string): Promise<CompanyRow | null> 
   return data as CompanyRow;
 }
 
-export async function fetchCompaniesBySecCodes(secCodes: string[]): Promise<CompanyRow[]> {
+export async function fetchCompaniesBySecCodes(
+  secCodes: string[],
+): Promise<CompanyRow[]> {
   if (secCodes.length === 0) return [];
   if (!isSupabaseConfigured()) {
     return fallbackData().filter(
-      (c) => secCodes.includes(c.sec_code ?? "") || secCodes.includes(c.ticker4 ?? ""),
+      (c) =>
+        secCodes.includes(c.sec_code ?? "") || secCodes.includes(c.ticker4 ?? ""),
     );
   }
   const { data, error } = await supabasePublic()

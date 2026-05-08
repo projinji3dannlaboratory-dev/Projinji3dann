@@ -1,9 +1,45 @@
 import { ImageResponse } from "@vercel/og";
 import { NextRequest } from "next/server";
-import { fetchCompany } from "@/lib/queries";
+import type { CompanyRow } from "@/lib/types";
 import { formatYen } from "@/lib/utils";
 
 export const runtime = "edge";
+
+// Edge functions have a 1-4MB compressed bundle limit on Vercel Hobby, so we
+// must NOT import lib/queries.ts (which directly imports the 3MB JSON).
+// Instead, fetch the snapshot from the public CDN-served asset on demand.
+let _snapshotPromise: Promise<CompanyRow[]> | null = null;
+
+async function loadSnapshotRows(req: NextRequest): Promise<CompanyRow[]> {
+  if (_snapshotPromise) return _snapshotPromise;
+  _snapshotPromise = (async () => {
+    const base =
+      process.env.NEXT_PUBLIC_SITE_URL
+      ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+      ?? new URL(req.url).origin;
+    const r = await fetch(`${base}/data/snapshot.json`, {
+      // Snapshot only changes once a year — cache aggressively
+      next: { revalidate: 86400 },
+    });
+    if (!r.ok) {
+      console.warn("[og] snapshot fetch failed:", r.status);
+      return [];
+    }
+    const data = await r.json();
+    return (data?.rows ?? []) as CompanyRow[];
+  })();
+  return _snapshotPromise;
+}
+
+async function fetchCompanyForOg(
+  req: NextRequest,
+  code: string,
+): Promise<CompanyRow | null> {
+  const rows = await loadSnapshotRows(req);
+  return (
+    rows.find((c) => c.sec_code === code || c.ticker4 === code) ?? null
+  );
+}
 
 // Cache the Japanese font fetch across requests within an instance.
 // We pull a Noto Sans JP weight 700 subset from Google Fonts CDN.
@@ -73,7 +109,7 @@ export async function GET(req: NextRequest) {
     return defaultOg();
   }
 
-  const c = await fetchCompany(code);
+  const c = await fetchCompanyForOg(req, code);
   if (!c) return defaultOg();
 
   const grade = c.grade ?? "—";
