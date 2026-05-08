@@ -1,3 +1,10 @@
+# ✅ 公開完了
+
+🔗 **本番URL: https://salary-ranking-jp.vercel.app**
+🔗 **GitHubリポジトリ: https://github.com/projinji3dannlaboratory-dev/Projinji3dann**
+
+---
+
 # 公開までの手順 (edinetdb.jp 経由 / 完全無料)
 
 データソースを **edinetdb.jp に正式ピボット**しました。EDINET公式のログイン詰まりは回避され、APIキーは既に登録・動作確認済みです。

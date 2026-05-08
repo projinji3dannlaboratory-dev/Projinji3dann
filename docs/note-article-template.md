@@ -1,6 +1,6 @@
 # note 公開用 記事テンプレート
 
-> 公開時に <YOUR_SITE_URL> を実際のドメインに置換し、各セクションを必要に応じてカスタマイズしてください。
+> 公開時に https://salary-ranking-jp.vercel.app を実際のドメインに置換し、各セクションを必要に応じてカスタマイズしてください。
 
 ---
 
@@ -12,7 +12,7 @@
 **平均年収・平均年齢・平均勤続年数** を取得し、「若くして高年収」を **業種補正されたスコア** で
 ランキング表示できるサイトを公開しました。
 
-🔗 **<YOUR_SITE_URL>**
+🔗 **https://salary-ranking-jp.vercel.app**
 
 ## なぜ作ったか
 
@@ -24,7 +24,7 @@
 
 ### 1. ランキング & 検索 & フィルタ
 
-- 全 ${COUNT} 社（順次拡大）を、年収 / 平均年齢 / 独自スコア / 5年成長率 などでソート
+- 全 3,785 社を、年収 / 平均年齢 / 独自スコア などでソート
 - 業種・市場・年収レンジ・年齢レンジ・従業員数で絞り込み
 - 4,000社の仮想スクロールで瞬時表示、URL を共有すると同じフィルタ条件で開ける
 
@@ -38,7 +38,7 @@
 - 銀行 vs IT のような業種差を吸収
 - S / A / B / C / D の5段階グレードを付与
 
-スクリーンショット例 → **${COMPANY_EXAMPLE}** は ${COMPANY_GRADE} グレード（${COMPANY_SCORE}点）
+スクリーンショット例 → **トヨタ自動車** は A グレード（76.1点）、**キーエンス** は S グレード（150.0点）
 
 ### 3. 年収シミュレーション
 
@@ -63,7 +63,7 @@
 
 ## 使い方
 
-1. <YOUR_SITE_URL> にアクセス
+1. https://salary-ranking-jp.vercel.app にアクセス
 2. 上部の検索バーに企業名 or 証券コードを入力
 3. 各企業をクリックして詳細・スコア・シミュレーションを表示
 4. ★アイコンでお気に入り、レーダーで比較
@@ -85,7 +85,7 @@
 3月期決算企業の有報がほぼ出揃うタイミングで一気に取り込みます。
 
 ソースコードは GitHub で公開しています:
-🔗 **<YOUR_GITHUB_URL>**
+🔗 **https://github.com/projinji3dannlaboratory-dev/Projinji3dann**
 
 ## 注意事項
 
@@ -109,12 +109,12 @@
 有価証券報告書から平均年収・年齢を取得し、業種補正したスコアでランキング表示。
 年収シミュレーションも搭載。
 
-<YOUR_SITE_URL>
+https://salary-ranking-jp.vercel.app
 
 #個人開発 #年収 #転職
 ```
 
 ## OGP プレビュー
 
-- TOP: <YOUR_SITE_URL>/api/og
-- 企業ページ例: <YOUR_SITE_URL>/api/og?code=7203
+- TOP: https://salary-ranking-jp.vercel.app/api/og
+- 企業ページ例: https://salary-ranking-jp.vercel.app/api/og?code=7203
