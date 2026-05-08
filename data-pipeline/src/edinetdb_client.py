@@ -42,6 +42,8 @@ class CompanySnapshot:
     accounting_standard: str | None
     avg_age_years: float | None
     avg_annual_salary_man_yen: float | None  # 単位: 万円
+    avg_tenure_years: float | None
+    num_employees: int | None
     business_tags: list[str]
 
 
@@ -109,12 +111,15 @@ class EdinetdbClient:
     ) -> list[CompanySnapshot]:
         """Walk the screener with offset to retrieve every listed company.
 
-        We filter `avg_annual_salary >= 0` AND `avg_age >= 0` so both metrics
-        are guaranteed to appear as columns in the response.
+        Adding 4 metrics as conditions causes the screener to include all 4 as
+        columns in the response. avg-tenure-years and num-employees are not in
+        the public `available_metrics` list, but the API still accepts them.
         """
         conditions = [
             {"metric": "avg-annual-salary", "operator": "gte", "value": 0},
             {"metric": "avg-age", "operator": "gte", "value": 0},
+            {"metric": "avg-tenure-years", "operator": "gte", "value": 0},
+            {"metric": "num-employees", "operator": "gte", "value": 0},
         ]
         out: list[CompanySnapshot] = []
         offset = 0
@@ -153,6 +158,7 @@ class EdinetdbClient:
 # ─── helpers ────────────────────────────────────────────────────────────
 
 def _row_to_snapshot(row: dict) -> CompanySnapshot:
+    headcount = _to_float(row.get("num-employees"))
     return CompanySnapshot(
         edinet_code=row.get("edinetCode") or "",
         sec_code=row.get("secCode") or None,
@@ -163,6 +169,8 @@ def _row_to_snapshot(row: dict) -> CompanySnapshot:
         accounting_standard=row.get("accountingStandard"),
         avg_age_years=_to_float(row.get("avg-age")),
         avg_annual_salary_man_yen=_to_float(row.get("avg-annual-salary")),
+        avg_tenure_years=_to_float(row.get("avg-tenure-years")),
+        num_employees=int(headcount) if headcount is not None else None,
         business_tags=list(row.get("business_tags") or []),
     )
 
