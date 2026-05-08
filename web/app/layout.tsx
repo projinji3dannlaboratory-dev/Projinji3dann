@@ -36,8 +36,19 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ja_JP",
     siteName: "年収ランキング.jp",
+    images: [
+      {
+        url: "/api/og",
+        width: 1200,
+        height: 630,
+        alt: "年収ランキング.jp - 若くして高年収な上場企業ランキング",
+      },
+    ],
   },
-  twitter: { card: "summary_large_image" },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/api/og"],
+  },
   robots: { index: true, follow: true },
   // Google AdSense ownership verification (only emitted if env var is set)
   other: isAdsenseEnabled()
