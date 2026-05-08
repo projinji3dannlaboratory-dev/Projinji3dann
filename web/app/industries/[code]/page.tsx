@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GradeBadge } from "@/components/companies/grade-badge";
+import { InlineAd } from "@/components/ads/ad-slot";
 import { formatYen, formatNumber } from "@/lib/utils";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
@@ -80,6 +81,9 @@ export default async function IndustryPage({ params }: PageProps) {
           />
         </div>
       </Card>
+
+      {/* Ad slot: between industry stats and the company list */}
+      <InlineAd className="my-6" />
 
       <Card className="mt-6 overflow-hidden">
         <div className="grid grid-cols-[48px_1fr_72px_120px_88px_56px] items-center gap-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">

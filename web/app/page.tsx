@@ -1,6 +1,7 @@
 import { fetchAllCompanies } from "@/lib/queries";
 import { FiltersPanel } from "@/components/companies/filters-panel";
 import { RankingList } from "@/components/companies/ranking-list";
+import { InlineAd } from "@/components/ads/ad-slot";
 import { INDUSTRIES } from "@/lib/industries";
 import { SITE_CONFIG } from "@/lib/site-config";
 
@@ -12,10 +13,17 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">
       <Hero count={rows.length} />
+
+      {/* Ad slot 1: just below the hero, above the fold for most viewports */}
+      <InlineAd className="my-6" />
+
       <div className="my-6">
         <FiltersPanel industries={INDUSTRIES} />
       </div>
       <RankingList rows={rows} />
+
+      {/* Ad slot 2: end of page, after the user has engaged with the ranking */}
+      <InlineAd className="mt-10" />
     </div>
   );
 }

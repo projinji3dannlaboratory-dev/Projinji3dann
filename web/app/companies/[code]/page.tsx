@@ -9,6 +9,7 @@ import { ScoreBreakdown } from "@/components/companies/score-breakdown";
 import { SalarySimulator } from "@/components/companies/salary-simulator";
 import { SimilarCompanies } from "@/components/companies/similar-companies";
 import { FavoriteButton } from "@/components/companies/favorite-button";
+import { InlineAd } from "@/components/ads/ad-slot";
 import { JsonLd, breadcrumbJsonLd, companyJsonLd } from "@/components/seo/json-ld";
 import { formatNumber, formatYen } from "@/lib/utils";
 import { ExternalLink, ArrowLeft, GitCompareArrows } from "lucide-react";
@@ -158,6 +159,9 @@ export default async function CompanyPage({ params }: PageProps) {
           />
         )}
       </div>
+
+      {/* Ad slot: between the data sections and the recommendations */}
+      <InlineAd className="my-8" />
 
       <div className="mt-6">
         <SimilarCompanies current={company} pool={all} />
