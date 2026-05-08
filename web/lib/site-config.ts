@@ -43,8 +43,11 @@ export const SITE_CONFIG = {
   /** Google AdSense Publisher ID (例: "ca-pub-1234567890123456") */
   adsenseClient: process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "",
 
-  /** AdSense ad unit slot ID for in-content placements (例: "1234567890") */
-  adsenseSlotInline: process.env.NEXT_PUBLIC_ADSENSE_SLOT_INLINE ?? "",
+  /** AdSense ad unit slot ID for in-content placements (例: "1234567890")
+   *  Defaults to the operator's "salary-ranking-jp-inline" unit. Override
+   *  via env var to swap to a different unit without redeploying code. */
+  adsenseSlotInline:
+    process.env.NEXT_PUBLIC_ADSENSE_SLOT_INLINE ?? "5739211750",
 
   /** Google Analytics Measurement ID (例: "G-XXXXXXXXXX") */
   gaId: process.env.NEXT_PUBLIC_GA_ID ?? "",
