@@ -35,8 +35,9 @@ export const SITE_CONFIG = {
   /** 個別相談・サービス販売 */
   coconalaUrl: "https://coconala.com/users/724079",
 
-  /** 連絡先メールアドレス (任意・通常は親サイトのフォーム経由) */
-  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "",
+  /** 連絡先メールアドレス */
+  contactEmail:
+    process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "projinji3dann.laboratory@gmail.com",
 
   /** Google AdSense Publisher ID (例: "ca-pub-1234567890123456") */
   adsenseClient: process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? "",

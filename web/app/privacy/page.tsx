@@ -224,6 +224,17 @@ const SECTIONS: { id: string; title: string; body: React.ReactNode }[] = [
           <li>
             運営者: {SITE_CONFIG.operator}（{SITE_CONFIG.operatorTitle}）
           </li>
+          {SITE_CONFIG.contactEmail && (
+            <li>
+              連絡先メール:{" "}
+              <a
+                className="underline"
+                href={`mailto:${SITE_CONFIG.contactEmail}`}
+              >
+                {SITE_CONFIG.contactEmail}
+              </a>
+            </li>
+          )}
           <li>
             姉妹サイト:{" "}
             <a
@@ -233,23 +244,22 @@ const SECTIONS: { id: string; title: string; body: React.ReactNode }[] = [
               rel="noopener noreferrer"
             >
               {SITE_CONFIG.parentSite.name}
-            </a>
-          </li>
-          <li>
-            お問い合わせフォーム:{" "}
+            </a>{" "}
+            (
             <a
               className="underline"
               href={SITE_CONFIG.parentSite.contactUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
-              公式サイト経由
-            </a>{" "}
-            （または{" "}
+              公式お問い合わせフォーム
+            </a>
+            )
+          </li>
+          <li>
             <a className="underline" href="/contact">
               当サイトのお問い合わせページ
             </a>
-            ）
           </li>
         </ul>
       </>

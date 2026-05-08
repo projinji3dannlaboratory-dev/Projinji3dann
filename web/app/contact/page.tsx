@@ -150,13 +150,18 @@ export default function ContactPage() {
       </div>
 
       {contactEmail && (
-        <Card className="mt-6 p-5 text-sm">
-          <div className="font-semibold">直接メール (補助)</div>
+        <Card className="mt-6 p-5">
+          <div className="text-xs font-medium text-muted-foreground">
+            直接メールでのご連絡
+          </div>
+          <div className="mt-1 font-semibold">
+            メールアドレス
+          </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            上記フォームをご利用いただけない場合のみ、以下までご連絡ください。
+            フォーム以外でご連絡を希望される方は、以下までメールをお送りください。
           </p>
           <a
-            className="mt-2 inline-flex font-mono underline"
+            className="mt-3 inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 font-mono text-sm hover:bg-accent"
             href={`mailto:${contactEmail}?subject=${encodeURIComponent(
               "[年収ランキング.jp] お問い合わせ",
             )}`}
@@ -195,6 +200,16 @@ export default function ContactPage() {
               ココナラ プロフィール
             </a>
           </dd>
+          {contactEmail && (
+            <>
+              <dt className="text-muted-foreground">連絡先メール</dt>
+              <dd>
+                <a className="underline" href={`mailto:${contactEmail}`}>
+                  {contactEmail}
+                </a>
+              </dd>
+            </>
+          )}
           <dt className="text-muted-foreground">本サイト</dt>
           <dd>{SITE_CONFIG.siteName}（{SITE_CONFIG.siteUrl}）</dd>
           <dt className="text-muted-foreground">サービス開始</dt>
