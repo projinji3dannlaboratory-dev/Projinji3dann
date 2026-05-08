@@ -76,14 +76,14 @@ export function AnalyticsScripts() {
         </>
       )}
 
-      {/* Google AdSense */}
+      {/* Google AdSense — emitted as a plain async <script> tag (NOT next/script)
+          to follow AdSense's recommended snippet exactly and avoid the
+          'AdSense head tag doesn't support data-nscript attribute' warning */}
       {isAdsenseEnabled() && (
-        <Script
-          id="adsense-script"
+        <script
+          async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE_CONFIG.adsenseClient}`}
           crossOrigin="anonymous"
-          strategy="afterInteractive"
-          async
         />
       )}
     </>
