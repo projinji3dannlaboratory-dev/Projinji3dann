@@ -1,12 +1,1 @@
-# ads.txt for salary-ranking-jp
-#
-# Replace the placeholder line below with your actual AdSense Publisher ID
-# after AdSense approves your site:
-#
-#   google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
-#
-# AdSense will instruct you on the exact line in your AdSense dashboard
-# under "Sites" → click your domain → "ads.txt".
-#
-# Until then, leave this file as-is. Empty/comment-only ads.txt is treated
-# as 'no authorized sellers' which is fine pre-approval.
+google.com, pub-3014542250630771, DIRECT, f08c47fec0942fa0
