@@ -1,31 +1,26 @@
-"""End-to-end annual batch.
+"""End-to-end annual batch using edinetdb.jp as the data source.
 
-For a given fiscal year (e.g. 2024 = FY ending 2024-03-31 → 2024-12-31),
-fetch all annual securities reports submitted in the corresponding window
-[FY-end + 1 day, FY-end + 4 months], parse XBRL, compute scores, and
-upsert into Postgres.
+Strategy:
+  1. Hit /v1/screener with multi-condition JSON ~8 times to retrieve all
+     ~3,800 listed companies' avg-age and avg-annual-salary.
+  2. Map JP industry names to JPX 33 sector codes.
+  3. Compute industry aggregates and per-company score.
+  4. Upsert into Postgres (companies / employee_stats / industry_aggregates /
+     company_scores) and refresh ranks.
+
+The original 金融庁 EDINET + XBRL parser path is preserved in
+`xbrl_parser.py` and `edinet_client.py` for future activation; see README.
 """
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, asdict
-from datetime import date, timedelta
-from pathlib import Path
-from typing import Iterable
+from dataclasses import asdict, dataclass
 
 from rich.console import Console
-from rich.progress import Progress, TaskID
-from tqdm import tqdm
 
-from .config import CACHE_DIR, get_edinet_api_key
-from .edinet_client import DocumentMeta, EdinetClient
-from .scoring import aggregate_industry, score_company
-from .xbrl_parser import (
-    EmployeeStats,
-    find_instance_file,
-    normalize_industry_code,
-    parse_xbrl_instance,
-)
+from .edinetdb_client import CompanySnapshot, EdinetdbClient
+from .industry_map import INDUSTRY_NAME_BY_CODE, industry_name_to_code
+from .scoring import IndustryStats, aggregate_industry, score_company
 
 
 logger = logging.getLogger(__name__)
@@ -34,109 +29,93 @@ console = Console()
 
 @dataclass
 class CompanyRow:
+    """Normalized row ready to be persisted to Postgres."""
+
     edinet_code: str
     sec_code: str | None
     name_ja: str
+    name_en: str | None
     industry_code: int | None
+    industry_name: str | None
     fiscal_year: int
-    period_end: str
+    period_end: str | None
     avg_age_years: float | None
-    avg_tenure_years: float | None
-    avg_annual_salary_yen: int | None
-    employee_count: int | None
-    doc_id: str
-    submitted_at: str
-    source_url: str
+    avg_tenure_years: float | None        # not in screener; left None for now
+    avg_annual_salary_yen: int | None     # 円単位
+    employee_count: int | None            # not in screener
+    accounting_standard: str | None
+    business_tags: list[str]
+    source: str = "edinetdb.jp"
+    source_url: str | None = None
 
     def as_dict(self) -> dict:
         return asdict(self)
 
 
-def fiscal_year_window(fy: int) -> tuple[date, date]:
-    """Window where annual reports for FY (= year of period end) are submitted.
-
-    Most Japanese listed companies have fiscal year ending 3/31 → submission window
-    1/1 – 8/31 of the same year covers virtually all 3月期 + others.
-    """
-    return date(fy, 1, 1), date(fy, 8, 31)
-
-
-def collect_documents(start: date, end: date) -> list[DocumentMeta]:
-    api_key = get_edinet_api_key()
-    docs: list[DocumentMeta] = []
-    cur = start
-    days = (end - start).days + 1
-    with EdinetClient(api_key) as client:
-        for i in tqdm(range(days), desc="listing days"):
-            day = start + timedelta(days=i)
-            try:
-                items = client.list_documents(day)
-            except Exception as e:  # noqa: BLE001
-                logger.warning("list_documents failed for %s: %s", day, e)
-                continue
-            for d in items:
-                if d.doc_type_code == "120" and d.xbrl_flag and d.sec_code:
-                    docs.append(d)
-    return docs
-
-
-def parse_one_doc(doc: DocumentMeta) -> CompanyRow | None:
-    api_key = get_edinet_api_key()
-    with EdinetClient(api_key) as client:
-        try:
-            files = client.fetch_xbrl_files(doc.doc_id, cache_dir=CACHE_DIR)
-        except Exception as e:  # noqa: BLE001
-            logger.warning("download failed: %s (%s)", doc.doc_id, e)
-            return None
-
-    instance = find_instance_file(files)
-    if not instance:
+def _to_company_row(s: CompanySnapshot) -> CompanyRow | None:
+    """Filter / normalize a screener row into CompanyRow."""
+    if not s.edinet_code or s.fiscal_year is None:
+        return None
+    if s.avg_age_years is None and s.avg_annual_salary_man_yen is None:
         return None
 
-    stats = parse_xbrl_instance(instance)
-    if not stats.is_complete_for_stats():
-        return None
+    industry_code = industry_name_to_code(s.industry_name)
+    salary_yen: int | None = None
+    if s.avg_annual_salary_man_yen is not None:
+        salary_yen = int(round(s.avg_annual_salary_man_yen * 10_000))
 
-    period_end = stats.fiscal_year_end or doc.period_end or ""
-    if not period_end:
-        return None
-    fiscal_year = int(period_end[:4])
-
+    period_end = f"{s.fiscal_year}-12-31"  # placeholder; refined per company in detail call
     return CompanyRow(
-        edinet_code=stats.edinet_code or doc.edinet_code,
-        sec_code=stats.sec_code or doc.sec_code,
-        name_ja=stats.filer_name or doc.filer_name,
-        industry_code=normalize_industry_code(stats.industry_code),
-        fiscal_year=fiscal_year,
+        edinet_code=s.edinet_code,
+        sec_code=s.sec_code,
+        name_ja=s.name_ja,
+        name_en=s.name_en,
+        industry_code=industry_code,
+        industry_name=INDUSTRY_NAME_BY_CODE.get(industry_code) if industry_code else s.industry_name or None,
+        fiscal_year=s.fiscal_year,
         period_end=period_end,
-        avg_age_years=stats.avg_age_years,
-        avg_tenure_years=stats.avg_tenure_years,
-        avg_annual_salary_yen=stats.avg_annual_salary_yen,
-        employee_count=stats.employee_count,
-        doc_id=doc.doc_id,
-        submitted_at=doc.submit_datetime,
-        source_url=f"https://disclosure2.edinet-fsa.go.jp/WEEK0040.aspx?docID={doc.doc_id}",
+        avg_age_years=s.avg_age_years,
+        avg_tenure_years=None,
+        avg_annual_salary_yen=salary_yen,
+        employee_count=None,
+        accounting_standard=s.accounting_standard,
+        business_tags=s.business_tags,
+        source_url=f"https://edinetdb.jp/company/{s.edinet_code}",
     )
 
 
-def parse_all(docs: Iterable[DocumentMeta]) -> list[CompanyRow]:
-    docs = list(docs)
+def collect_snapshots(client: EdinetdbClient | None = None) -> list[CompanyRow]:
+    """Fetch every company from edinetdb.jp screener and normalize."""
+    own = client is None
+    if own:
+        client = EdinetdbClient()
+    try:
+        snaps = client.fetch_all_company_snapshots()
+    finally:
+        if own:
+            client.__exit__(None, None, None)
+
     rows: list[CompanyRow] = []
-    for d in tqdm(docs, desc="parsing XBRL"):
-        row = parse_one_doc(d)
-        if row:
-            rows.append(row)
+    skipped = 0
+    for s in snaps:
+        r = _to_company_row(s)
+        if r is None:
+            skipped += 1
+            continue
+        rows.append(r)
+    console.print(
+        f"[bold]normalized {len(rows)} companies[/bold] "
+        f"(skipped {skipped} rows missing data)"
+    )
     return rows
 
 
-def compute_industry_aggregates(
-    rows: list[CompanyRow],
-) -> dict[int, dict]:
-    """Group rows by industry → IndustryStats dict."""
+def compute_industry_aggregates(rows: list[CompanyRow]) -> dict[int, dict]:
     by_industry: dict[int, list[CompanyRow]] = {}
     for r in rows:
-        if r.industry_code:
-            by_industry.setdefault(r.industry_code, []).append(r)
+        if r.industry_code is None:
+            continue
+        by_industry.setdefault(r.industry_code, []).append(r)
 
     out: dict[int, dict] = {}
     for code, group in by_industry.items():
@@ -153,11 +132,9 @@ def compute_industry_aggregates(
 def compute_scores(
     rows: list[CompanyRow], industry_aggs: dict[int, dict]
 ) -> list[dict]:
-    from .scoring import IndustryStats
-
     scored: list[dict] = []
     for r in rows:
-        if not r.industry_code:
+        if r.industry_code is None:
             continue
         agg_dict = industry_aggs.get(r.industry_code)
         if not agg_dict:
@@ -177,8 +154,19 @@ def compute_scores(
                 "industry_correction": s.industry_correction,
             }
         )
-    # Compute overall ranks
     scored.sort(key=lambda x: x["raw_score"], reverse=True)
     for i, s in enumerate(scored, start=1):
         s["rank_overall"] = i
     return scored
+
+
+def predominant_fiscal_year(rows: list[CompanyRow]) -> int:
+    """Companies in different FYs may all be 'latest'; pick the most common."""
+    if not rows:
+        from datetime import date
+
+        return date.today().year - 1
+    counts: dict[int, int] = {}
+    for r in rows:
+        counts[r.fiscal_year] = counts.get(r.fiscal_year, 0) + 1
+    return max(counts.items(), key=lambda kv: kv[1])[0]

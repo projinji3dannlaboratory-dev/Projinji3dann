@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { snapshotMeta } from "@/lib/queries";
 
 export function Footer() {
+  const meta = snapshotMeta();
   return (
     <footer className="mt-20 border-t bg-muted/30">
       <div className="mx-auto max-w-7xl px-4 py-10 text-sm text-muted-foreground md:px-6">
@@ -14,9 +16,25 @@ export function Footer() {
           <div>
             <h3 className="mb-2 font-semibold text-foreground">データ</h3>
             <ul className="space-y-1">
-              <li>出典: <a className="underline" target="_blank" rel="noopener noreferrer" href="https://disclosure2.edinet-fsa.go.jp/">EDINET (金融庁)</a></li>
+              <li>
+                出典: <a className="underline" target="_blank" rel="noopener noreferrer" href="https://disclosure2.edinet-fsa.go.jp/">金融庁 EDINET</a>
+              </li>
+              <li>
+                データ提供:{" "}
+                <a
+                  className="underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="https://edinetdb.jp/"
+                >
+                  EDINET DB (Cabocia Inc.)
+                </a>
+              </li>
+              <li>
+                対象: <span className="tabular-nums">{meta.companyCount?.toLocaleString() ?? "—"}</span> 社
+                {meta.fiscalYear ? ` / FY${meta.fiscalYear}` : ""}
+              </li>
               <li>更新: 毎年7月1日 自動バッチ</li>
-              <li>業種分類: 東証33業種</li>
             </ul>
           </div>
           <div>

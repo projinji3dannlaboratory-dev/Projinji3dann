@@ -1,10 +1,22 @@
 /**
- * Database queries layer. Falls back to local sample fixture when Supabase env
- * is not configured — handy for development before the pipeline has run once.
+ * Database queries layer.
+ *
+ * Resolution order:
+ *   1. Supabase (production) when NEXT_PUBLIC_SUPABASE_URL + ANON_KEY are set
+ *   2. Real snapshot at web/data/snapshot.json (committed, refreshed by the
+ *      Python pipeline) — this is what the deployed site uses out of the box
+ *   3. Hand-crafted SAMPLE_DATA — only when no snapshot file is present
  */
 import type { CompanyRow } from "./types";
 import { supabasePublic } from "./supabase";
 import { SAMPLE_DATA } from "@/data/sample";
+import snapshot from "@/data/snapshot.json";
+
+const SNAPSHOT_ROWS: CompanyRow[] = (snapshot?.rows as CompanyRow[]) ?? [];
+
+function fallbackData(): CompanyRow[] {
+  return SNAPSHOT_ROWS.length > 0 ? SNAPSHOT_ROWS : SAMPLE_DATA;
+}
 
 function isSupabaseConfigured(): boolean {
   return Boolean(
@@ -15,21 +27,25 @@ function isSupabaseConfigured(): boolean {
 
 export async function fetchAllCompanies(): Promise<CompanyRow[]> {
   if (!isSupabaseConfigured()) {
-    return SAMPLE_DATA;
+    return fallbackData();
   }
   const { data, error } = await supabasePublic()
     .from("v_company_latest")
     .select("*");
   if (error) {
     console.error("[fetchAllCompanies] supabase error", error);
-    return SAMPLE_DATA;
+    return fallbackData();
   }
   return (data ?? []) as CompanyRow[];
 }
 
 export async function fetchCompany(secCode: string): Promise<CompanyRow | null> {
   if (!isSupabaseConfigured()) {
-    return SAMPLE_DATA.find((c) => c.sec_code === secCode || c.ticker4 === secCode) ?? null;
+    return (
+      fallbackData().find(
+        (c) => c.sec_code === secCode || c.ticker4 === secCode,
+      ) ?? null
+    );
   }
   const { data, error } = await supabasePublic()
     .from("v_company_latest")
@@ -47,7 +63,7 @@ export async function fetchCompany(secCode: string): Promise<CompanyRow | null> 
 export async function fetchCompaniesBySecCodes(secCodes: string[]): Promise<CompanyRow[]> {
   if (secCodes.length === 0) return [];
   if (!isSupabaseConfigured()) {
-    return SAMPLE_DATA.filter(
+    return fallbackData().filter(
       (c) => secCodes.includes(c.sec_code ?? "") || secCodes.includes(c.ticker4 ?? ""),
     );
   }
@@ -65,4 +81,16 @@ export async function fetchCompaniesBySecCodes(secCodes: string[]): Promise<Comp
     return [];
   }
   return (data ?? []) as CompanyRow[];
+}
+
+/** Snapshot metadata for footer / data source attribution */
+export function snapshotMeta() {
+  return {
+    fiscalYear: (snapshot?.fiscal_year as number | undefined) ?? null,
+    source: (snapshot?.source as string | undefined) ?? "edinetdb.jp",
+    companyCount:
+      (snapshot?.company_count as number | undefined)
+      ?? SNAPSHOT_ROWS.length
+      ?? null,
+  };
 }

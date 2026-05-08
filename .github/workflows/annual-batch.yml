@@ -1,12 +1,16 @@
-# Annual data batch — fetches new EDINET filings, parses XBRL, and upserts into Supabase.
+# Annual data batch — fetches latest snapshot from edinetdb.jp,
+# computes scores, exports to web/data/snapshot.json (committed back),
+# and (optionally) upserts into Supabase.
 #
-# Schedule: 6/30 15:00 UTC = 7/1 00:00 JST.
+# Schedule: 6/30 15:00 UTC == 7/1 00:00 JST.
 # Manual run is also available via workflow_dispatch.
 #
 # Required GitHub secrets:
-#   EDINET_API_KEY        — EDINET API v2 subscription key
-#   DATABASE_URL          — Supabase Postgres connection string (use Pooler URL)
-#   SLACK_WEBHOOK_URL     — (optional) Slack incoming webhook for notification
+#   EDINETDB_API_KEY      — edinetdb.jp API key (https://edinetdb.jp/developers/dashboard)
+#
+# Optional secrets:
+#   DATABASE_URL          — Supabase Postgres pooler URL (only if using DB)
+#   SLACK_WEBHOOK_URL     — Slack webhook for failure notifications
 #
 name: Annual Data Batch
 
@@ -17,25 +21,26 @@ on:
   workflow_dispatch:
     inputs:
       fiscal_year:
-        description: "Override target fiscal year (year of period end). Empty = previous calendar year."
+        description: "Override target fiscal year. Empty = predominant FY from snapshot."
         required: false
         default: ""
       dry_run:
-        description: "Skip DB writes for testing"
+        description: "Skip Supabase writes (snapshot still gets committed)."
         type: boolean
         required: false
         default: false
 
 permissions:
-  contents: read
+  contents: write   # needed to commit the refreshed snapshot back
 
 jobs:
   batch:
     runs-on: ubuntu-latest
-    timeout-minutes: 240   # this can run a few hours for 4,000 companies × XBRL download
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: data-pipeline
+
     steps:
       - uses: actions/checkout@v4
 
@@ -50,29 +55,54 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Smoke-test API key
+        env:
+          EDINETDB_API_KEY: ${{ secrets.EDINETDB_API_KEY }}
+        run: python -m src.cli ping
+
       - name: Run annual batch
         env:
-          EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+          EDINETDB_API_KEY: ${{ secrets.EDINETDB_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PYTHONIOENCODING: "utf-8"
         run: |
           set -e
           ARGS=""
           if [ -n "${{ github.event.inputs.fiscal_year }}" ]; then
-            ARGS="--fiscal-year ${{ github.event.inputs.fiscal_year }}"
+            ARGS="$ARGS --fiscal-year ${{ github.event.inputs.fiscal_year }}"
           fi
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ] || [ -z "${{ secrets.DATABASE_URL }}" ]; then
             ARGS="$ARGS --dry-run"
+            echo "Running in dry-run mode (DATABASE_URL not set or dry_run flag set)"
           fi
           python -m src.cli run-batch $ARGS
 
-      - name: Upload processed snapshot
+      - name: Export snapshot for the web app
+        run: python -m src.export_for_web
+
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: snapshot
-          path: data-pipeline/data/processed/*.json
-          retention-days: 30
+          path: |
+            data-pipeline/data/processed/*.json
+            web/data/snapshot.json
+          retention-days: 90
+
+      - name: Commit refreshed snapshot
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data/snapshot.json data-pipeline/data/processed/*.json || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "data: refresh snapshot ($(date -u +%Y-%m-%d))"
+            git push
+          fi
 
       - name: Notify Slack on failure
         if: failure() && env.SLACK_WEBHOOK_URL != ''
@@ -80,5 +110,5 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":":rotating_light: Annual batch failed in salary-ranking-jp. See workflow run."}' \
+            --data '{"text":":rotating_light: Annual batch failed in salary-ranking-jp."}' \
             "$SLACK_WEBHOOK_URL"

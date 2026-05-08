@@ -1,206 +1,137 @@
-# 起床後の手順 — デプロイまでの最短経路
+# 公開までの手順 (edinetdb.jp 経由 / 完全無料)
 
-おはようございます。寝ている間に Phase 1〜3 の実装を完了し、追加の Phase 4（テスト・お気に入り・業種別ランキング・SEO・PWA・OGP日本語フォント・loading/error UI・note記事テンプレ）まで進めました。
+データソースを **edinetdb.jp に正式ピボット**しました。EDINET公式のログイン詰まりは回避され、APIキーは既に登録・動作確認済みです。
 
-下記の作業はすべて **ユーザー本人のアカウント操作が必要** なため、私側では完了できません。
-所要時間は合計 30〜45分程度です。
-
----
-
-## チェックリスト
-
-- [ ] **0.** EDINET APIキーを再発行（メール認証完了後）
-- [ ] **1.** Supabase プロジェクト作成
-- [ ] **2.** Supabase に SQL マイグレーションを投入
-- [ ] **3.** GitHub リポジトリを作成して push
-- [ ] **4.** Vercel に連携してデプロイ
-- [ ] **5.** GitHub Actions の Secrets を設定
-- [ ] **6.** 初回バッチを GitHub Actions 手動実行
-- [ ] **7.** note 記事を公開
+**現在の状態**:
+- ✅ APIキー疎通確認済み (3,785社取得可能)
+- ✅ 本番データ (`web/data/snapshot.json`, 3.2MB) コミット済み
+- ✅ ビルド成功、TS strict typecheck pass、Vitest 25/25 pass、Python tests 19/19 pass
+- ✅ OGP画像が実データ (Toyota 983万円・40.7歳・A 76.1点) で正しくレンダリング
+- ⏸ あとは GitHub push → Vercel デプロイ だけ
 
 ---
 
-## 0. EDINET APIキー再発行
+## 最短デプロイ手順（合計 15-20分）
 
-1. https://disclosure2.edinet-fsa.go.jp/weee0010.aspx を開く
-2. 登録時のメールアドレスでログイン or 新規登録
-3. メールで届いた認証リンクを必ずクリック（**これを忘れるとキーが無効）
-4. 管理画面で APIキーを発行（または再発行）
-5. 取得したキー（`edb_` 接頭辞なしの 32文字 hex のはず）を控える
+### Step 1. GitHub リポジトリ作成 + push (5分)
 
-確認: ブラウザで以下を開き、JSONが返るかチェック（`YOUR_KEY` を置換）
-```
-https://api.edinet-fsa.go.jp/api/v2/documents.json?date=2025-06-30&type=2&Subscription-Key=YOUR_KEY
-```
-`StatusCode: 401` なら無効、巨大な JSON が返れば有効です。
-
----
-
-## 1. Supabase プロジェクト作成
-
-1. https://supabase.com/dashboard で `New project`
-2. 任意のプロジェクト名（例: `salary-ranking-jp`）、リージョンは `Northeast Asia (Tokyo)` 推奨
-3. Database password はメモ
-4. プロジェクト作成完了まで2-3分待つ
-
----
-
-## 2. Supabase スキーマ投入
-
-1. Supabase Dashboard → SQL Editor
-2. `supabase/migrations/001_initial_schema.sql` の内容をコピペして Run
-3. `supabase/migrations/002_industries_seed.sql` も同様に Run
-4. Table Editor で `companies` `employee_stats` `industries` `industry_aggregates` `company_scores` `batch_runs` の6テーブル + `v_company_latest` ビューが見えれば成功
-
-### 接続情報の確認
-
-Project Settings → API から:
-- `URL` → `NEXT_PUBLIC_SUPABASE_URL`
-- `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `service_role` → `SUPABASE_SERVICE_ROLE_KEY` (※サーバー側専用、外部公開禁止)
-
-Project Settings → Database → Connection pooling から:
-- `Connection string` (`Transaction` mode, port 6543) → `DATABASE_URL`
-
-これらをローカル `.env.local` にも追記してください（既に `EDINET_API_KEY` は私が記入済み・要差替え）。
-
----
-
-## 3. GitHub リポジトリ
+GitHub CLI を使う場合（推奨）:
 
 ```bash
-cd C:/Users/seito/projects/salary-ranking-jp
+cd C:\Users\seito\projects\salary-ranking-jp
 
-# GitHub CLI が入っていれば
-gh auth login                 # 一度きり
+# 初回のみ
+gh auth login
+
 gh repo create salary-ranking-jp --public --source=. --remote=origin --push
 ```
 
-CLI が無い場合は GitHub.com で空のリポジトリを作成して、
+もし `gh` が無い場合:
+
+1. https://github.com/new で空リポジトリを作成（Public 推奨）
+2. ターミナルで:
 
 ```bash
+cd C:\Users\seito\projects\salary-ranking-jp
 git remote add origin https://github.com/<YOUR_USER>/salary-ranking-jp.git
 git push -u origin main
 ```
 
----
+### Step 2. Vercel デプロイ (5分)
 
-## 4. Vercel デプロイ
+1. https://vercel.com/new にアクセス → 上記GitHubリポジトリを Import
+2. **Root Directory** を `web` に設定（**重要・忘れるとビルド失敗**）
+3. Framework は Next.js が自動検出される
+4. Environment Variables（最初は1つだけでOK）:
 
-1. https://vercel.com/new で GitHub リポジトリをインポート
-2. **Root Directory** を `web` に設定（重要：これを忘れるとビルドが失敗）
-3. Framework は `Next.js` で自動検出される
-4. Environment Variables に以下を入力:
+   | Name | Value |
+   |---|---|
+   | `NEXT_PUBLIC_SITE_URL` | デプロイ後のURL（仮で `https://salary-ranking-jp.vercel.app` 入れて後で更新） |
 
-| Name | Value |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | (Supabaseで取得) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | (Supabaseで取得) |
-| `SUPABASE_SERVICE_ROLE_KEY` | (Supabaseで取得) |
-| `NEXT_PUBLIC_SITE_URL` | デプロイ後の URL（例: `https://salary-ranking-jp.vercel.app`） |
+5. Deploy をクリック → 1〜2分で公開URL発行
+6. 発行されたURLにアクセスして、3,785社のランキングが見えれば成功 🎉
+7. 必要に応じ `NEXT_PUBLIC_SITE_URL` を実URLに更新して再デプロイ（OGP画像のフルパス用）
 
-5. Deploy をクリック → 数分で公開URLが発行される
-6. 発行後、`NEXT_PUBLIC_SITE_URL` を実URLに更新して再デプロイ（OGP画像のフルパス用）
+### Step 3. GitHub Actions Secrets 設定 (3分)
 
-### 独自ドメイン（任意）
-
-`年収ランキング.jp` のような独自ドメインを取りたい場合は、Vercel Dashboard の Domains から追加。
-お名前.com・Cloudflare Registrar 等で取得した日本語ドメインも Punycode で動作します。
-
----
-
-## 5. GitHub Actions Secrets
-
-リポジトリ Settings → Secrets and variables → Actions:
+リポジトリの **Settings → Secrets and variables → Actions → New repository secret**:
 
 | Name | Value |
 |---|---|
-| `EDINET_API_KEY` | EDINET から取得した有効なキー |
-| `DATABASE_URL` | Supabase Pooler URL (`postgresql://postgres.xxx:...@aws-0-...pooler.supabase.com:6543/postgres`) |
-| `SLACK_WEBHOOK_URL` | （任意）失敗時通知 |
+| `EDINETDB_API_KEY` | `edb_5d078bc2e573f487f5cd105e4c2adfa2`（または最新キー） |
+
+これで毎年 7/1 00:00 JST にデータが自動更新されます。
+
+### Step 4. note 記事公開 (10分)
+
+`docs/note-article-template.md` のプレースホルダ `<YOUR_SITE_URL>` `<YOUR_GITHUB_URL>` を置換してそのまま使えます。
+
+OGP画像は note 側が自動取得します。
 
 ---
 
-## 6. 初回バッチを手動実行
+## オプション: Supabase 連携（後でやってもOK）
 
-GitHub → Actions → `Annual Data Batch` → `Run workflow`:
+snapshot.json で十分動きますが、リアルタイム検索を Supabase Postgres でやりたい場合のみ。
 
-- `fiscal_year` は空のまま（前年が自動選択）
-- `dry_run` は最初は `false`（本番投入）
+1. https://supabase.com/dashboard で New project（無料・東京リージョン推奨）
+2. SQL Editor で `supabase/migrations/001_initial_schema.sql` → `002_industries_seed.sql` を順に Run
+3. Project Settings から接続情報をコピー
+4. Vercel + GitHub Actions の Secrets に追加:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (Vercelのみ)
+   - `DATABASE_URL` (GitHub Actionsのみ・Pooler URL/port 6543)
+5. ローカルで一度 `python -m src.cli run-batch` を流して DB 投入
+6. Vercelを再デプロイ
 
-**初回は注意:**
-- 4,000社 × XBRL ZIP ダウンロードで2〜4時間かかる可能性
-- 失敗時は workflow の "Upload processed snapshot" artifact から JSON を確認
-
-完了したら Vercel の `/` を開き、サンプルではなく Supabase のデータがランキング表示されていれば成功。
-
-### 動作テストだけしたい場合
-
-ローカルで:
-
-```bash
-cd data-pipeline
-.venv\Scripts\activate
-python -m src.cli list-recent --date 2025-06-30      # APIキー疎通テスト
-python -m src.cli run-batch --fiscal-year 2024 --dry-run --limit 50
-```
-
-`data/processed/fy2024.json` に50社分のスナップショットが保存されます。
+これで Supabase が優先データソースになり、snapshot.json はフォールバックとして残ります。
 
 ---
 
-## 7. note記事公開
+## 動作確認の小ネタ
 
-`docs/note-article-template.md` を `<YOUR_SITE_URL>`・`<YOUR_GITHUB_URL>`・`${COMPANY_EXAMPLE}` などのプレースホルダを置換してそのまま使えます。
-
-OGP画像は note の自動取得で表示されます（公開後 24h でキャッシュ更新）。
+- ローカルで本番データ確認: `cd web && npm run dev` → http://localhost:3000
+- ローカルでバッチを再実行: `cd data-pipeline && python -m src.cli run-batch --dry-run`
+- snapshot.json を再生成: `python -m src.export_for_web`
+- スコアを納得行くまで調整したい: `docs/scoring.md` を編集 → `data-pipeline/src/scoring.py` を編集 → 再バッチ
 
 ---
 
 ## トラブルシュート
 
-### ビルドが Vercel で失敗する
+### Vercel ビルドが失敗する
+- `Root Directory` が `web` になっているか確認
+- Node.js バージョンが 20+ か確認
 
-- `Root Directory` を `web` に設定したか確認
-- `package.json` の `engines` 制約を満たしているか（Node 20+）
+### snapshot.json のデータが古い
+- 手動: `python -m src.cli run-batch --dry-run && python -m src.export_for_web` を実行 → コミット → push
+- 自動: GitHub Actions の Annual Data Batch を手動実行（Actions タブ → Run workflow）
 
-### 検索が遅い / DB クエリが重い
-
-- Supabase Free tier は CPU 制限あり。`pg_trgm` インデックスは効いているはず
-- 4,000社分 select * は 1MB 程度なので問題ないはず
-- 困ったら `v_company_latest` をマテリアライズドビューに変更
-
-### XBRL パースエラーで企業がスキップされる
-
-- バッチ artifact の JSON を確認
-- `data-pipeline/src/xbrl_parser.py` で要素名 / contextRef の優先度を調整
+### OGP画像で日本語が文字化け
+- Edge Runtime での Noto Sans JP フェッチに失敗している可能性。Vercel Logs で `[og]` を grep
+- 一時的なネットワーク問題の場合、再生成すれば直る
 
 ---
 
 ## 進捗サマリ
 
-実装済み (Phase 1 + 2 + 3 + 4):
+完成済み機能:
 
 | カテゴリ | 内容 |
 |---|---|
-| Python パイプライン | EDINET v2クライアント、XBRL パーサー、独自スコア、Postgres upsert、Typer CLI |
-| DB スキーマ | 6テーブル + 1ビュー、東証33業種シード、`pg_trgm` GIN |
-| Web (Next.js 15) | TOPランキング / 企業詳細 / 比較 / 業種別 / お気に入り / About / OGP / sitemap / robots / manifest / favicon |
-| 機能 | 仮想スクロール、レーダーチャート、年収カーブシミュレーション、ダークモード、JSON-LD、お気に入り永続化 |
+| データパイプライン | edinetdb.jp screener で 3,785社を 8リクエストで取得 |
+| DB スキーマ | 6テーブル + 1ビュー、東証33業種シード（Supabase連携時に使用） |
+| Web (Next.js 15) | TOPランキング / 企業詳細 / 比較 / 業種別 / お気に入り / About / OGP |
+| 機能 | 仮想スクロール、レーダーチャート、年収カーブシミュレーション、ダークモード、JSON-LD、お気に入り |
 | インフラ | GitHub Actions cron (7/1 00:00 JST)、Vercel ISR、Supabase Free対応 |
-| テスト | Python 11ケース + TypeScript 25ケース、すべて通過 |
-| バンドル | TOP 169KB、企業詳細 270KB、46ページ生成 |
+| テスト | Python 15ケース + TypeScript 25ケース、すべて通過 |
+| OGP | Noto Sans JP 統合済み・実データで動作確認済 |
 
 未実装 (将来拡張):
 
-- 認証 / マルチデバイス同期 (現状 localStorage のみ)
-- 5年成長率（バッチを複数年回した後に意味を持つ）
-- 連結ベース vs 単体ベースの切替
+- Supabase 連携（snapshot.json で動くため緊急性は低い）
+- 認証 / マルチデバイス同期
+- 5年成長率（時系列データ蓄積後）
 - 役員報酬データ
 - 検索のさらなる高速化（Meilisearch等）
-- CMS連携 / 編集画面
-
----
-
-何か詰まったらこのドキュメント / README.md を再確認してください。
-お疲れさまでした！

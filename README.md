@@ -18,15 +18,22 @@
 ## アーキテクチャ全体像
 
 ```
-EDINET API v2 (XBRL)         GitHub Actions cron
-        │                    7/1 00:00 JST 毎年
-        ▼                            │
-data-pipeline (Python)  ◀────────────┘
-  - EDINETクライアント / XBRLパーサー / スコア計算
-  - JSONスナップショット保存 + Supabaseにupsert
+edinetdb.jp /v1/screener         GitHub Actions cron
+   (8 calls / annual batch)      7/1 00:00 JST 毎年
+        │                                 │
+        ▼                                 │
+data-pipeline (Python)  ◀─────────────────┘
+  - edinetdb.jp クライアント
+  - 業種名→JPX33業種コード マッピング
+  - 独自スコア計算 (年収 × 年齢 × 業界補正)
+  - JSON スナップショット保存 + Supabase upsert
+  - web/data/snapshot.json を自動コミット
+        │
+        ├──> web/data/snapshot.json
+        │    (静的フォールバック・Supabase未設定時はこれを使用)
         │
         ▼
-Supabase Postgres (Free 500MB)
+Supabase Postgres (Free 500MB) — オプション
   - companies / employee_stats / industry_aggregates / company_scores
   - v_company_latest (フロントが直接読むビュー)
         │
@@ -34,6 +41,9 @@ Supabase Postgres (Free 500MB)
 Next.js 15 (App Router) on Vercel Hobby (Free)
   - SSG/ISR + shadcn/ui + Tailwind v4 + Recharts + TanStack Virtual
 ```
+
+**データソース**: 一次情報は [金融庁 EDINET](https://disclosure2.edinet-fsa.go.jp/) の有価証券報告書。
+構造化データの取得は [EDINET DB (Cabocia Inc.)](https://edinet-db.jp/) を経由しています。
 
 すべて無料枠で動作するように設計：
 
@@ -50,14 +60,17 @@ Next.js 15 (App Router) on Vercel Hobby (Free)
 salary-ranking-jp/
 ├── data-pipeline/                # Python バッチ
 │   ├── src/
-│   │   ├── edinet_client.py      # EDINET API ラッパー
-│   │   ├── xbrl_parser.py        # XBRL XML 抽出
+│   │   ├── edinetdb_client.py    # ★ edinetdb.jp /v1/screener クライアント
+│   │   ├── industry_map.py       # 業種名→東証33業種コード マッピング
 │   │   ├── scoring.py            # 独自スコア計算
 │   │   ├── pipeline.py           # オーケストレーション
-│   │   ├── db.py                 # Postgres upsert
+│   │   ├── export_for_web.py     # web/data/snapshot.json 出力
+│   │   ├── db.py                 # Postgres upsert (任意)
 │   │   ├── config.py             # 環境変数ローダー
-│   │   └── cli.py                # Typer CLI
-│   ├── tests/                    # ユニットテスト (合成XBRL)
+│   │   ├── cli.py                # Typer CLI
+│   │   ├── edinet_client.py      # [legacy] 金融庁 EDINET API クライアント
+│   │   └── xbrl_parser.py        # [legacy] XBRL XML 抽出
+│   ├── tests/                    # ユニットテスト
 │   └── requirements.txt
 ├── web/                          # Next.js アプリ
 │   ├── app/
@@ -88,12 +101,20 @@ salary-ranking-jp/
 ### 0. 前提
 
 - Python 3.12+、Node.js 20+、Git
-- Supabaseアカウント（無料）、Vercelアカウント（無料）
+- edinetdb.jp アカウント（無料）、Vercelアカウント（無料）
+- Supabase は **任意**（無くてもデフォルトで snapshot.json を読みます）
 
-### 1. EDINET APIキー取得
+### 1. edinetdb.jp APIキー取得 (3分)
 
-1. [EDINET API利用登録](https://disclosure2.edinet-fsa.go.jp/weee0010.aspx) でAPIキーを発行
-2. `.env.example` を `.env.local` にコピーし `EDINET_API_KEY` を記入
+1. https://edinetdb.jp/developers/dashboard でアカウント作成（無料）
+2. ダッシュボードから「+新規キー発行」をクリック
+3. `edb_xxxxxxxxxxxx` 形式のキーをコピー
+4. `.env.example` を `.env.local` にコピーし `EDINETDB_API_KEY` を記入
+
+**無料プラン**: 100リクエスト/日。年1回バッチで使うのは8リクエストのみ。
+
+データ出典: [金融庁 EDINET](https://disclosure2.edinet-fsa.go.jp/) (一次情報)
+データ提供: [EDINET DB](https://edinetdb.jp/) (構造化・配信)
 
 ### 2. Supabase プロジェクト作成
 
@@ -118,17 +139,20 @@ python -m venv .venv
 .venv\Scripts\activate          # Windows  (Mac/Linux: source .venv/bin/activate)
 pip install -r requirements.txt
 
-# 直近1日分の有報リスト確認 (APIキー疎通テスト)
-python -m src.cli list-recent --date 2025-06-30
+# APIキー疎通テスト
+python -m src.cli ping
 
-# 1社だけ落として中身を見る
-python -m src.cli fetch-doc S100ABCD
+# 全社ドライラン (DB 書込なし、3,785社を 8 リクエストで取得)
+python -m src.cli run-batch --dry-run
 
-# 本番バッチ (前年度の有報を全取得 → JSONスナップショット保存 + DB投入)
-python -m src.cli run-batch --fiscal-year 2024
+# 50社だけ試したい場合
+python -m src.cli run-batch --dry-run --limit 50
 
-# DB書込なしでドライラン
-python -m src.cli run-batch --fiscal-year 2024 --dry-run --limit 100
+# Web app 用に snapshot.json を出力
+python -m src.export_for_web
+
+# Supabase 接続情報がある場合は本番投入
+python -m src.cli run-batch
 ```
 
 ### 4. Web (Next.js)
@@ -139,26 +163,29 @@ npm install
 npm run dev               # http://localhost:3000
 ```
 
-サンプルデータ (50社) が `data/sample.ts` にあるため、Supabase未設定でもUIは動きます。
+`web/data/snapshot.json` (バッチ生成済み・3,785社の本番データ) が含まれているため、
+Supabase 未設定でも **本物のランキング** が即座に動作します。
 
 ### 5. デプロイ (Vercel)
 
 1. GitHubにpushしてVercelで連携
-2. Vercel上で環境変数を設定:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_SITE_URL` (例: `https://salary-ranking.jp`)
-3. Build Command: `next build` / Root Directory: `web`
+2. **Root Directory** を `web` に設定 (重要)
+3. Vercel上で環境変数を設定（**最低限は `NEXT_PUBLIC_SITE_URL` だけでも動く**）:
+   - `NEXT_PUBLIC_SITE_URL` (必須・デプロイ後のURL)
+   - `NEXT_PUBLIC_SUPABASE_URL` (任意・Supabase連携時のみ)
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (任意)
+
+Supabase未設定の場合は `web/data/snapshot.json` (3,785社) を表示します。
 
 ### 6. 年次バッチの設定 (GitHub Actions)
 
 GitHub リポジトリの Settings → Secrets で以下を登録:
 
-| Secret | 値 |
-|---|---|
-| `EDINET_API_KEY` | EDINET APIキー |
-| `DATABASE_URL` | Supabase Pooler URL |
-| `SLACK_WEBHOOK_URL` | (任意) Slack通知用 |
+| Secret | 必須 | 値 |
+|---|:---:|---|
+| `EDINETDB_API_KEY` | ✅ | edinetdb.jp APIキー |
+| `DATABASE_URL` | 任意 | Supabase Pooler URL（Supabase連携時のみ） |
+| `SLACK_WEBHOOK_URL` | 任意 | Slack通知用 webhook |
 
 `.github/workflows/annual-batch.yml` が **毎年 7月1日 00:00 JST** に自動実行されます。
 
