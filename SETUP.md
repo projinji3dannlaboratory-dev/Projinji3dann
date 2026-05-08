@@ -1,6 +1,6 @@
 # ✅ 公開完了
 
-🔗 **本番URL: https://salary-ranking-jp.vercel.app**
+🔗 **本番URL: https://salary.projinji3dann-laboratory.com**
 🔗 **GitHubリポジトリ: https://github.com/projinji3dannlaboratory-dev/Projinji3dann**
 
 ---
@@ -53,7 +53,7 @@ git push -u origin main
 
    | Name | Value |
    |---|---|
-   | `NEXT_PUBLIC_SITE_URL` | デプロイ後のURL（仮で `https://salary-ranking-jp.vercel.app` 入れて後で更新） |
+   | `NEXT_PUBLIC_SITE_URL` | デプロイ後のURL（仮で `https://salary.projinji3dann-laboratory.com` 入れて後で更新） |
 
 5. Deploy をクリック → 1〜2分で公開URL発行
 6. 発行されたURLにアクセスして、3,785社のランキングが見えれば成功 🎉

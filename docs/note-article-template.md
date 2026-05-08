@@ -1,6 +1,6 @@
 # note 公開用 記事テンプレート
 
-> 公開時に https://salary-ranking-jp.vercel.app を実際のドメインに置換し、各セクションを必要に応じてカスタマイズしてください。
+> 公開時に https://salary.projinji3dann-laboratory.com を実際のドメインに置換し、各セクションを必要に応じてカスタマイズしてください。
 
 ---
 
@@ -12,7 +12,7 @@
 **平均年収・平均年齢・平均勤続年数** を取得し、「若くして高年収」を **業種補正されたスコア** で
 ランキング表示できるサイトを公開しました。
 
-🔗 **https://salary-ranking-jp.vercel.app**
+🔗 **https://salary.projinji3dann-laboratory.com**
 
 ## なぜ作ったか
 
@@ -63,7 +63,7 @@
 
 ## 使い方
 
-1. https://salary-ranking-jp.vercel.app にアクセス
+1. https://salary.projinji3dann-laboratory.com にアクセス
 2. 上部の検索バーに企業名 or 証券コードを入力
 3. 各企業をクリックして詳細・スコア・シミュレーションを表示
 4. ★アイコンでお気に入り、レーダーで比較
@@ -109,12 +109,12 @@
 有価証券報告書から平均年収・年齢を取得し、業種補正したスコアでランキング表示。
 年収シミュレーションも搭載。
 
-https://salary-ranking-jp.vercel.app
+https://salary.projinji3dann-laboratory.com
 
 #個人開発 #年収 #転職
 ```
 
 ## OGP プレビュー
 
-- TOP: https://salary-ranking-jp.vercel.app/api/og
-- 企業ページ例: https://salary-ranking-jp.vercel.app/api/og?code=7203
+- TOP: https://salary.projinji3dann-laboratory.com/api/og
+- 企業ページ例: https://salary.projinji3dann-laboratory.com/api/og?code=7203

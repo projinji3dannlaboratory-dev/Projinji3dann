@@ -6,7 +6,8 @@
 export const SITE_CONFIG = {
   /** 公開URL */
   siteUrl:
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://salary-ranking-jp.vercel.app",
+    process.env.NEXT_PUBLIC_SITE_URL
+    ?? "https://salary.projinji3dann-laboratory.com",
 
   /** サイト名（プロダクト名） */
   siteName: "年収ランキング.jp",

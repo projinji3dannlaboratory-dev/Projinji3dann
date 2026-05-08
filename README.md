@@ -1,6 +1,6 @@
 # 日本上場企業 年収ランキング (salary-ranking-jp)
 
-🔗 **公開URL: https://salary-ranking-jp.vercel.app**
+🔗 **公開URL: https://salary.projinji3dann-laboratory.com**
 
 日本の上場企業（プライム / スタンダード / グロース）の有価証券報告書から
 平均年齢・平均年収・平均勤続年数を取得し、独自スコアでランキング表示する Webアプリケーション。

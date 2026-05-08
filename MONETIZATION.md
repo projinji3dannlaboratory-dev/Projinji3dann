@@ -25,7 +25,7 @@ Vercel Dashboard → `salary-ranking-jp` プロジェクト → **Settings → E
 | Name | Value 例 | 用途 | 必須 |
 |---|---|---|---|
 | `NEXT_PUBLIC_SITE_OPERATOR` | `山田太郎` または `年収ラボ` | フッター・ポリシー記載の運営者名 | ✅ |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | `contact@your-domain.com` | お問い合わせの mailto: 先 | ✅ |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | `projinji3dann.laboratory@gmail.com` | お問い合わせの mailto: 先 | ✅ |
 | `NEXT_PUBLIC_GA_ID` | `G-XXXXXXXXXX` | Google Analytics 4 (空でも可) | 任意 |
 | `NEXT_PUBLIC_ADSENSE_CLIENT` | `ca-pub-1234567890123456` | AdSense 承認後に設定 | 後で |
 
@@ -44,7 +44,7 @@ Vercel Dashboard → `salary-ranking-jp` プロジェクト → **Settings → E
 ### 2. Vercel に接続
 
 1. Vercel Dashboard → `salary-ranking-jp` → **Settings → Domains**
-2. 「Add」をクリック → `your-domain.com` を入力
+2. 「Add」をクリック → `salary.projinji3dann-laboratory.com` を入力
 3. Vercel が「Add the following CNAME record / A record」と表示される
 4. Cloudflare Dashboard → DNS → 表示された通りに追加:
    - `A` レコード: `@` → `76.76.21.21` (Vercel公式IP)
@@ -56,7 +56,7 @@ Vercel Dashboard → `salary-ranking-jp` プロジェクト → **Settings → E
 ### 3. 環境変数を独自ドメインに更新
 
 Vercel → Settings → Environment Variables:
-- `NEXT_PUBLIC_SITE_URL` を `https://your-domain.com` に変更
+- `NEXT_PUBLIC_SITE_URL` を `https://salary.projinji3dann-laboratory.com` に変更
 - 再デプロイ
 
 ---
@@ -67,7 +67,7 @@ Vercel → Settings → Environment Variables:
 
 1. https://www.google.com/adsense/start/ にアクセス
 2. Google アカウントでログイン
-3. サイトURL: `https://your-domain.com` を入力（独自ドメイン推奨。`.vercel.app` でも申請可だが審査通りにくい）
+3. サイトURL: `https://salary.projinji3dann-laboratory.com` を入力（独自ドメイン推奨。`.vercel.app` でも申請可だが審査通りにくい）
 4. 国: 日本
 
 ### 2. AdSense コードをサイトに紐付け
@@ -95,7 +95,7 @@ google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
 
 `web/public/ads.txt` を編集して上記行を追記 → コミット → push → 自動再デプロイ。
 
-確認: `https://your-domain.com/ads.txt` で表示できればOK。
+確認: `https://salary.projinji3dann-laboratory.com/ads.txt` で表示できればOK。
 
 ### 4. AdSense 審査ポイント
 
@@ -154,7 +154,7 @@ google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
 
 1. https://analytics.google.com/ → 管理 → プロパティを作成
 2. プロパティ名: `年収ランキング.jp`
-3. データストリーム → ウェブ → URL `https://your-domain.com`
+3. データストリーム → ウェブ → URL `https://salary.projinji3dann-laboratory.com`
 4. 表示される **測定ID `G-XXXXXXXXXX`** をコピー
 
 ### 2. Vercel に設定
