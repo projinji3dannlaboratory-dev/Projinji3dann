@@ -66,15 +66,22 @@ export interface SimPoint {
   estimatedSalary: number;
 }
 
+/** シミュレーション対象年齢の下限・上限。
+ *  - 25歳: 新卒3年目以降。22-24歳は新卒採用の各社固有レンジで平均値が大きく外れるため除外
+ *  - 55歳: 役職定年・出向開始年齢の閾値。それ以降の年収は会社平均からの推計が困難
+ */
+export const SIM_START_AGE = 25;
+export const SIM_END_AGE = 55;
+
 /**
- * 22-65歳の推定年収カーブを生成。
+ * 25-55歳の推定年収カーブを生成。
  */
 export function simulateCurve(
   avgAge: number,
   avgSalary: number,
   industryCode: number | null | undefined,
-  startAge = 22,
-  endAge = 65,
+  startAge = SIM_START_AGE,
+  endAge = SIM_END_AGE,
 ): SimPoint[] {
   const params = curveOf(industryCode);
   const scale = calibrate(avgAge, avgSalary, params);
@@ -95,7 +102,7 @@ export interface SimSummary {
   current: number;
   future5: number;
   future10: number;
-  lifetime: number;  // 22-65 sum
+  lifetime: number;  // 25-55 sum
 }
 
 export function summarizeSimulation(

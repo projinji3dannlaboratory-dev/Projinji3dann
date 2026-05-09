@@ -90,23 +90,34 @@ export function RankingList({ rows }: Props) {
 
 function VirtualizedTable({ rows }: { rows: CompanyRow[] }) {
   const parentRef = React.useRef<HTMLDivElement>(null);
+  // Estimate is per row. Mobile row stacks 3 lines (name + ticker + salary/age)
+  // so we budget a bit more height. Desktop rows have 2 lines and the extra
+  // space just becomes vertical padding — harmless.
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 60,
+    estimateSize: () => 68,
     overscan: 12,
   });
 
+  // Mobile-first responsive grid:
+  //   < md (mobile): [#] [企業 (with stacked salary/age)] [Grade] [★]
+  //   ≥ md (desktop): [#] [企業] [Grade] [年収] [年齢] [勤続] [従業員] [★]
+  const gridCols =
+    "grid-cols-[36px_1fr_44px_36px] md:grid-cols-[64px_1fr_72px_120px_88px_88px_120px_56px]";
+
   return (
     <Card className="overflow-hidden">
-      <div className="grid grid-cols-[64px_1fr_72px_120px_88px_88px_120px_56px] items-center gap-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
-        <div>順位</div>
+      <div
+        className={`grid ${gridCols} items-center gap-x-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground`}
+      >
+        <div>#</div>
         <div>企業</div>
         <div className="text-center">グレード</div>
-        <div className="text-right">平均年収</div>
-        <div className="text-right">年齢</div>
-        <div className="text-right">勤続</div>
-        <div className="text-right">従業員数</div>
+        <div className="hidden md:block text-right">平均年収</div>
+        <div className="hidden md:block text-right">年齢</div>
+        <div className="hidden md:block text-right">勤続</div>
+        <div className="hidden md:block text-right">従業員数</div>
         <div></div>
       </div>
       <div ref={parentRef} className="relative max-h-[70vh] overflow-auto">
@@ -117,33 +128,50 @@ function VirtualizedTable({ rows }: { rows: CompanyRow[] }) {
               <Link
                 key={r.edinet_code}
                 href={`/companies/${r.sec_code ?? r.ticker4 ?? r.edinet_code}`}
-                className="absolute inset-x-0 grid grid-cols-[64px_1fr_72px_120px_88px_88px_120px_56px] items-center gap-2 border-b px-3 py-2 text-sm hover:bg-accent/40 transition-colors"
+                className={`absolute inset-x-0 grid ${gridCols} items-center gap-x-2 border-b px-3 py-2 text-sm hover:bg-accent/40 transition-colors`}
                 style={{ top: vi.start, height: vi.size }}
               >
-                <div className="font-mono text-xs text-muted-foreground tabular-nums">
-                  #{vi.index + 1}
+                <div className="font-mono text-[11px] md:text-xs text-muted-foreground tabular-nums">
+                  {vi.index + 1}
                 </div>
                 <div className="min-w-0">
                   <div className="truncate font-medium">{r.name_ja}</div>
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <span className="font-mono">{r.ticker4 ?? r.sec_code ?? "—"}</span>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span className="font-mono shrink-0">
+                      {r.ticker4 ?? r.sec_code ?? "—"}
+                    </span>
                     {r.market && <Badge variant="muted">{r.market}</Badge>}
-                    {r.industry_name && <span className="truncate">{r.industry_name}</span>}
+                    {r.industry_name && (
+                      <span className="hidden md:inline truncate">
+                        {r.industry_name}
+                      </span>
+                    )}
+                  </div>
+                  {/* Mobile-only stats line (salary + age inline) */}
+                  <div className="md:hidden mt-0.5 flex items-center gap-2 text-[11px] tabular-nums">
+                    <span className="font-medium">
+                      {formatYen(r.avg_annual_salary_yen)}
+                    </span>
+                    {r.avg_age_years != null && (
+                      <span className="text-muted-foreground">
+                        {formatNumber(r.avg_age_years)}歳
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-center">
                   <GradeBadge grade={r.grade ?? null} size="sm" />
                 </div>
-                <div className="text-right tabular-nums">
+                <div className="hidden md:block text-right tabular-nums">
                   {formatYen(r.avg_annual_salary_yen)}
                 </div>
-                <div className="text-right tabular-nums">
+                <div className="hidden md:block text-right tabular-nums">
                   {r.avg_age_years != null ? `${formatNumber(r.avg_age_years)}歳` : "—"}
                 </div>
-                <div className="text-right tabular-nums text-muted-foreground">
+                <div className="hidden md:block text-right tabular-nums text-muted-foreground">
                   {r.avg_tenure_years != null ? `${formatNumber(r.avg_tenure_years)}年` : "—"}
                 </div>
-                <div className="text-right tabular-nums text-muted-foreground">
+                <div className="hidden md:block text-right tabular-nums text-muted-foreground">
                   {r.employee_count != null ? r.employee_count.toLocaleString() : "—"}
                 </div>
                 <div

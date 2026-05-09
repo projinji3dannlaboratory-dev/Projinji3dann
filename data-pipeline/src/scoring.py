@@ -72,6 +72,14 @@ def _percentile(data: list[float], p: float) -> float:
 
 
 def grade_from_score(raw: float) -> str:
+    """Grade thresholds tuned for the absolute-salary-weighted formula below.
+    Calibration targets (approximate):
+      S: 平均年収 1,500万円+ や、超優良 (キーエンス・商社) 水準
+      A: 平均年収 1,000万円前後の上位企業
+      B: 平均年収 600-800万円の中堅
+      C: 平均年収 500万円前後の平均的企業
+      D: 平均年収 400万円以下
+    """
     if raw >= 80:
         return "S"
     if raw >= 65:
@@ -83,14 +91,35 @@ def grade_from_score(raw: float) -> str:
     return "D"
 
 
+# 絶対年収のスコア化 anchor: 1,000万円 = 60点 (=B/A 境界より少し上)
+# つまり raw_score = absolute_score (0-100) + bonuses (-25 to +25)
+# 6,000,000 yen / 100 = 60,000 → 60万円 per point at the anchor
+_SALARY_ANCHOR_YEN_PER_POINT = 1_000_000_0 / 60  # ≒ 166,666 yen / point
+
+
 def score_company(
     company_salary_yen: int | None,
     company_age_years: float | None,
     industry: IndustryStats | None,
 ) -> CompanyScore | None:
-    """Compute the original score for one company.
+    """Compute the salary-anchored score for one company.
 
-    raw_score = (S_c / S_i) * (A_i / A_c) * 50
+    New formula (designed to make industry correction non-dominant):
+
+        absolute_score = clamp(salary_yen / 166,666, 0, 100)
+            # 1,000万円 → 60, 1,500万円 → 90, 2,000万円+ → 100
+
+        industry_bonus = clamp((salary_ratio - 1) * 20, -15, 25)
+            # 業界平均の +20% で +4, +50% で +10, 2倍以上は +25 で頭打ち
+
+        age_bonus = clamp((age_ratio - 1) * 25, -10, 25)
+            # 業界より若い分だけプラス (役職定年想定の年齢調整)
+
+        raw_score = clamp(absolute_score + industry_bonus + age_bonus, 0, 150)
+
+    This way, a 2,000万円 company always lands in S regardless of industry,
+    and a 400万円 company can't reach S even if its industry is dominated
+    by 350万円 peers (because absolute_score caps it at ~24).
     """
     if (
         company_salary_yen is None
@@ -100,11 +129,20 @@ def score_company(
     ):
         return None
 
-    salary_ratio = company_salary_yen / industry.avg_salary_yen
-    age_ratio = industry.avg_age_years / company_age_years
-    raw = salary_ratio * age_ratio * 50.0
-    raw = max(0.0, min(150.0, raw))  # clamp for display sanity
+    # 1) Absolute salary anchor — the dominant signal
+    absolute_score = max(0.0, min(100.0, company_salary_yen / _SALARY_ANCHOR_YEN_PER_POINT))
 
+    # 2) Industry-relative salary bonus
+    salary_ratio = company_salary_yen / industry.avg_salary_yen
+    industry_bonus = max(-15.0, min(25.0, (salary_ratio - 1.0) * 20.0))
+
+    # 3) Youth bonus relative to industry mean age
+    age_ratio = industry.avg_age_years / company_age_years
+    age_bonus = max(-10.0, min(25.0, (age_ratio - 1.0) * 25.0))
+
+    raw = max(0.0, min(150.0, absolute_score + industry_bonus + age_bonus))
+
+    # Deviation values (kept for the explainer UI, unchanged)
     salary_dev = 50.0 + 10.0 * (
         (company_salary_yen - industry.avg_salary_yen) / max(industry.salary_stddev_yen, 1.0)
     )

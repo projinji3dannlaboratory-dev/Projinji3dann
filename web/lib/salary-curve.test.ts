@@ -41,11 +41,11 @@ describe("simulateCurve calibration", () => {
     expect(Math.abs(at40.estimatedSalary - avgSalary)).toBeLessThan(2);
   });
 
-  it("covers ages 22-65 inclusive", () => {
+  it("covers ages 25-55 inclusive (新卒3年目〜役職定年前)", () => {
     const points = simulateCurve(40, 7_000_000, null);
-    expect(points[0].age).toBe(22);
-    expect(points[points.length - 1].age).toBe(65);
-    expect(points.length).toBe(44);
+    expect(points[0].age).toBe(25);
+    expect(points[points.length - 1].age).toBe(55);
+    expect(points.length).toBe(31);
   });
 });
 

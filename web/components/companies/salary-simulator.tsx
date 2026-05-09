@@ -5,7 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SalaryCurveChart } from "@/components/charts/salary-curve-chart";
-import { summarizeSimulation, INDUSTRY_TO_CURVE } from "@/lib/salary-curve";
+import {
+  summarizeSimulation,
+  INDUSTRY_TO_CURVE,
+  SIM_START_AGE,
+  SIM_END_AGE,
+} from "@/lib/salary-curve";
 import { formatYen } from "@/lib/utils";
 
 interface Props {
@@ -37,7 +42,9 @@ export function SalarySimulator({ avgAge, avgSalary, industryCode }: Props) {
         <Badge variant="outline">{CURVE_LABEL[curveType]}カーブ</Badge>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
-        平均値からの推計です。あくまで目安としてご利用ください。
+        {SIM_START_AGE}〜{SIM_END_AGE}歳の範囲で推計します。
+        新卒採用 ({SIM_START_AGE}歳未満) と役職定年後 ({SIM_END_AGE}歳超) は
+        平均値からの予測精度が落ちるため除外しています。
       </p>
 
       <div className="mt-4 flex items-center gap-3">
@@ -47,10 +54,17 @@ export function SalarySimulator({ avgAge, avgSalary, industryCode }: Props) {
         <Input
           id="sim-age"
           type="number"
-          min={20}
-          max={65}
+          min={SIM_START_AGE}
+          max={SIM_END_AGE}
           value={age}
-          onChange={(e) => setAge(Math.min(65, Math.max(20, Number(e.target.value) || 30)))}
+          onChange={(e) =>
+            setAge(
+              Math.min(
+                SIM_END_AGE,
+                Math.max(SIM_START_AGE, Number(e.target.value) || SIM_START_AGE + 5),
+              ),
+            )
+          }
           className="w-24 tabular-nums"
         />
         <span className="text-sm text-muted-foreground">歳の場合</span>
@@ -64,7 +78,11 @@ export function SalarySimulator({ avgAge, avgSalary, industryCode }: Props) {
       </div>
 
       <div className="mt-2">
-        <Stat label="22→65歳 累計（生涯年収）" value={sim.lifetime} wide />
+        <Stat
+          label={`${SIM_START_AGE}→${SIM_END_AGE}歳 累計（生涯年収）`}
+          value={sim.lifetime}
+          wide
+        />
       </div>
 
       <div className="mt-4">

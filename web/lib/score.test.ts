@@ -15,6 +15,22 @@ const INDUSTRY: IndustryStats = {
   ageStddevYears: 1.58,
 };
 
+const HIGH_PAYING_INDUSTRY: IndustryStats = {
+  industryCode: 6050,
+  avgSalaryYen: 15_000_000,
+  avgAgeYears: 42,
+  salaryStddevYen: 1_500_000,
+  ageStddevYears: 1.0,
+};
+
+const LOW_PAYING_INDUSTRY: IndustryStats = {
+  industryCode: 9050,
+  avgSalaryYen: 3_500_000,
+  avgAgeYears: 44,
+  salaryStddevYen: 200_000,
+  ageStddevYears: 1.5,
+};
+
 describe("gradeFromScore", () => {
   it("S threshold", () => {
     expect(gradeFromScore(95)).toBe("S");
@@ -46,11 +62,27 @@ describe("scoreCompany", () => {
     expect(["C", "D"]).toContain(r!.grade);
   });
 
-  it("industry-average inputs → ~50", () => {
+  it("industry-average inputs → ~42 (700万円 = 42点 absolute, 0 bonus)", () => {
     const r = scoreCompany(7_000_000, 40, INDUSTRY);
     expect(r).not.toBeNull();
-    expect(r!.rawScore).toBeCloseTo(50, 0);
-    expect(r!.grade).toBe("B");
+    // 700万 / 166,667 ≒ 42, plus 0 industry/age bonuses
+    expect(r!.rawScore).toBeGreaterThan(35);
+    expect(r!.rawScore).toBeLessThan(50);
+    expect(r!.grade).toBe("C");
+  });
+
+  it("absolute salary dominates: 2000万円 reaches S regardless of industry", () => {
+    const r = scoreCompany(20_000_000, 42, HIGH_PAYING_INDUSTRY);
+    expect(r).not.toBeNull();
+    expect(r!.grade).toBe("S");
+  });
+
+  it("low absolute salary cannot reach S via industry advantage alone", () => {
+    // 400万円 in a 350万円 industry, age 30 (much younger than 44 avg)
+    const r = scoreCompany(4_000_000, 30, LOW_PAYING_INDUSTRY);
+    expect(r).not.toBeNull();
+    expect(r!.grade).not.toBe("S");
+    expect(r!.rawScore).toBeLessThan(80);
   });
 
   it("returns null for missing inputs", () => {

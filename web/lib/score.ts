@@ -27,6 +27,22 @@ export function gradeFromScore(raw: number): Grade {
   return "D";
 }
 
+// 絶対年収の anchor: 1,000万円 = 60点 (B/A境界より少し上)
+const SALARY_ANCHOR_YEN_PER_POINT = 10_000_000 / 60;  // ≒ 166,667
+
+/**
+ * Salary-anchored score (mirrors data-pipeline/src/scoring.py).
+ *
+ *   absolute_score = clamp(salary_yen / 166_667, 0, 100)
+ *     1,000万円 → 60, 1,500万円 → 90, 2,000万円+ → 100
+ *
+ *   industry_bonus = clamp((salary_ratio - 1) * 20, -15, 25)
+ *   age_bonus      = clamp((age_ratio - 1) * 25, -10, 25)
+ *
+ *   raw_score = absolute_score + industry_bonus + age_bonus  (0..150)
+ *
+ * High absolute salary always dominates; industry correction is just a tilt.
+ */
 export function scoreCompany(
   salaryYen: number | null | undefined,
   ageYears: number | null | undefined,
@@ -43,9 +59,12 @@ export function scoreCompany(
     return null;
   }
 
+  const absoluteScore = clamp(salaryYen / SALARY_ANCHOR_YEN_PER_POINT, 0, 100);
   const salaryRatio = salaryYen / industry.avgSalaryYen;
+  const industryBonus = clamp((salaryRatio - 1) * 20, -15, 25);
   const ageRatio = industry.avgAgeYears / ageYears;
-  const raw = clamp(salaryRatio * ageRatio * 50, 0, 150);
+  const ageBonus = clamp((ageRatio - 1) * 25, -10, 25);
+  const raw = clamp(absoluteScore + industryBonus + ageBonus, 0, 150);
 
   const salaryDev = clamp(
     50 + (10 * (salaryYen - industry.avgSalaryYen)) / Math.max(industry.salaryStddevYen, 1),

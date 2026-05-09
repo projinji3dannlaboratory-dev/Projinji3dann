@@ -62,6 +62,50 @@ def test_score_low_pay_old_company_scores_low() -> None:
     assert s.grade in {"C", "D"}
 
 
+def test_high_absolute_salary_dominates_industry_correction() -> None:
+    """A 2,000万円 company should always reach S, even if its industry's
+    average is also high (so industry correction is small)."""
+    # 商社風: 業種平均がそもそも高い (1500万) ケース
+    salaries = [13_000_000, 14_000_000, 15_000_000, 16_000_000, 17_000_000]
+    ages = [41.0, 42.0, 42.0, 43.0, 43.0]
+    agg = aggregate_industry(salaries, ages, 6050)
+
+    s = score_company(20_000_000, 42.0, agg)
+    assert s is not None
+    assert s.grade == "S", f"Expected S, got {s.grade} (raw={s.raw_score})"
+
+
+def test_low_absolute_salary_cannot_reach_S_via_industry_only() -> None:
+    """A 400万円 company in a low-paying industry should NOT reach S.
+    The new formula caps the absolute_score at 24 (= 400万 / 166,666),
+    so even with maxed-out industry+age bonuses it stays well below 80.
+    This is the main bug fix from the old multiplicative formula."""
+    # 低年収業種: 全社が350万付近
+    salaries = [3_400_000, 3_500_000, 3_600_000, 3_700_000, 3_800_000]
+    ages = [42.0, 43.0, 44.0, 45.0, 46.0]
+    agg = aggregate_industry(salaries, ages, 9050)
+
+    # 業種内では年収+15%, 年齢-30% の "好成績" だが、絶対年収は依然低い
+    s = score_company(4_000_000, 30.0, agg)
+    assert s is not None
+    assert s.grade != "S", (
+        f"Low absolute salary should not reach S "
+        f"(grade={s.grade}, raw={s.raw_score})"
+    )
+
+
+def test_average_salary_company_is_around_B() -> None:
+    """A 700万円 company at industry average age should grade ~B."""
+    salaries = [5_000_000, 6_000_000, 7_000_000, 8_000_000, 9_000_000]
+    ages = [38.0, 40.0, 42.0, 41.0, 39.0]
+    agg = aggregate_industry(salaries, ages, 5250)
+
+    s = score_company(7_000_000, 40.0, agg)
+    assert s is not None
+    # 700万 → abs_score 42, ratio==1 → bonuses 0 → raw = 42 → C/B境界
+    assert 35 <= s.raw_score < 65, f"Mid-tier company unexpected score {s.raw_score}"
+
+
 def test_score_returns_none_for_missing_inputs() -> None:
     salaries = [5_000_000, 6_000_000, 7_000_000, 8_000_000, 9_000_000]
     ages = [38.0, 40.0, 42.0, 41.0, 39.0]
@@ -77,5 +121,8 @@ if __name__ == "__main__":
     test_industry_aggregate_basic()
     test_score_well_paid_young_company_scores_high()
     test_score_low_pay_old_company_scores_low()
+    test_high_absolute_salary_dominates_industry_correction()
+    test_low_absolute_salary_cannot_reach_S_via_industry_only()
+    test_average_salary_company_is_around_B()
     test_score_returns_none_for_missing_inputs()
     print("[OK] all scoring tests pass")
