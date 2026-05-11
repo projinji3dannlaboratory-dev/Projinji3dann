@@ -17,6 +17,7 @@ export function Header() {
               </div>
             </div>
           </Link>
+          {/* Desktop navigation */}
           <nav className="hidden gap-4 text-sm text-muted-foreground md:flex">
             <Link href="/" className="hover:text-foreground">
               ランキング
@@ -39,16 +40,46 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/favorites"
-            aria-label="お気に入り"
-            className="md:hidden inline-flex items-center justify-center size-9 rounded-md hover:bg-accent text-muted-foreground"
-          >
-            <Star className="size-4" />
-          </Link>
           <ThemeToggle />
         </div>
       </div>
+
+      {/* Mobile-only secondary navigation row */}
+      <nav
+        className="md:hidden flex items-center gap-1 overflow-x-auto border-t border-border/60 px-3 py-1.5 text-xs text-muted-foreground [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-label="モバイル ナビゲーション"
+      >
+        <Link
+          href="/"
+          className="shrink-0 rounded-full px-3 py-1.5 hover:bg-accent hover:text-foreground"
+        >
+          ランキング
+        </Link>
+        <Link
+          href="/industries"
+          className="shrink-0 rounded-full px-3 py-1.5 hover:bg-accent hover:text-foreground"
+        >
+          業種別
+        </Link>
+        <Link
+          href="/compare"
+          className="shrink-0 rounded-full px-3 py-1.5 hover:bg-accent hover:text-foreground"
+        >
+          企業比較
+        </Link>
+        <Link
+          href="/favorites"
+          className="shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1.5 hover:bg-accent hover:text-foreground"
+        >
+          <Star className="size-3" /> お気に入り
+        </Link>
+        <Link
+          href="/about"
+          className="shrink-0 rounded-full px-3 py-1.5 hover:bg-accent hover:text-foreground"
+        >
+          スコアの考え方
+        </Link>
+      </nav>
     </header>
   );
 }
