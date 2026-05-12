@@ -36,6 +36,9 @@ export const SITE_CONFIG = {
   /** 個別相談・サービス販売 */
   coconalaUrl: "https://coconala.com/users/724079",
 
+  /** note (面接対策・転職コラム集) */
+  noteUrl: "https://note.com/projinji3dann",
+
   /** 連絡先メールアドレス
    *  Public display intentionally disabled. Inquiries route to the parent
    *  site's contact form instead. Set NEXT_PUBLIC_CONTACT_EMAIL to re-enable. */

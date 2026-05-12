@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, BookOpen, Briefcase, ArrowRight } from "lucide-react";
 import { snapshotMeta } from "@/lib/queries";
 import { SITE_CONFIG } from "@/lib/site-config";
 import { CookieSettingsLink } from "./cookie-settings-link";
@@ -8,6 +8,43 @@ export function Footer() {
   const meta = snapshotMeta();
   return (
     <footer className="mt-20 border-t bg-muted/30">
+      {/* Note への流入レバレッジ用 CTA バンド */}
+      <div className="border-b bg-gradient-to-r from-amber-500/5 via-pink-500/5 to-sky-500/5">
+        <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+          <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-foreground">
+                次のステップ: 面接対策・転職ノウハウは note で
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                現役人事15年の知見をもとにした面接対策・年収交渉・企業研究の解説記事を公開しています。
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a
+                className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background hover:opacity-90 transition-opacity"
+                href={SITE_CONFIG.noteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <BookOpen className="size-4" />
+                note で記事を読む
+                <ArrowRight className="size-3.5" />
+              </a>
+              <a
+                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold hover:bg-background transition-colors"
+                href={SITE_CONFIG.coconalaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Briefcase className="size-4" />
+                ココナラで個別相談
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="mx-auto max-w-7xl px-4 py-10 text-sm text-muted-foreground md:px-6">
         <div className="grid gap-8 md:grid-cols-4">
           {/* About / Operator */}
@@ -32,6 +69,15 @@ export function Footer() {
                   rel="noopener noreferrer"
                 >
                   公式サイト
+                  <ExternalLink className="size-3" />
+                </a>
+                <a
+                  className="inline-flex items-center gap-1 underline hover:text-foreground"
+                  href={SITE_CONFIG.noteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  note
                   <ExternalLink className="size-3" />
                 </a>
                 <a
