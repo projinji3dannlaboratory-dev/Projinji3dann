@@ -10,6 +10,7 @@ import {
   siteJsonLd,
 } from "@/components/seo/json-ld";
 import { SITE_CONFIG, isAdsenseEnabled } from "@/lib/site-config";
+import ShareWidget from "@/components/layout/share-widget";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </ThemeProvider>
         <AnalyticsScripts />
         <JsonLd data={[siteJsonLd(), organizationJsonLd()]} />
+        <ShareWidget />
       </body>
     </html>
   );
